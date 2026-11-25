@@ -1,0 +1,31 @@
+name: jotalle
+description: Registro de fotos de caminhão e digitalização de documentos.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2
+  geolocator: ^13.0.2
+  http: ^1.2.2
+  shared_preferences: ^2.3.3
+  path_provider: ^2.1.5
+  image: ^4.5.4
+  pdf: ^3.11.3
+  uuid: ^4.5.1
+  connectivity_plus: ^6.1.4
+  cunning_document_scanner: ^1.2.0
+  open_filex: ^4.6.0
+  gal: ^2.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
