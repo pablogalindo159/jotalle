@@ -51,16 +51,14 @@
 
       <form method="post" action="{{ route('login.entrar') }}">
         @csrf
-        <label for="email">E-mail</label>
-        <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="username" autofocus required>
+        <label for="usuario">Usuário</label>
+        <input id="usuario" type="text" name="usuario" value="{{ old('usuario') }}" autocomplete="username" autocapitalize="none" autofocus required>
 
         <label for="senha">Senha</label>
         <div class="campo">
-          <input id="senha" type="password" name="password" autocomplete="current-password" required>
+          <input id="senha" type="password" name="senha" autocomplete="current-password" required>
           <button class="ver" type="button" onclick="var i=document.getElementById('senha');var m=i.type==='password';i.type=m?'text':'password';this.textContent=m?'Ocultar':'Mostrar'">Mostrar</button>
         </div>
-
-        <label class="lembrar"><input type="checkbox" name="lembrar" value="1"> Manter conectado</label>
 
         @if ($errors->any())
           <div class="erro">{{ $errors->first() }}</div>

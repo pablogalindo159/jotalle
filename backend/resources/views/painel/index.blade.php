@@ -38,7 +38,7 @@
 <header>
   <img src="/img/logo.png" alt="Jotalle Transportes">
   <div class="user">
-    <span>{{ auth()->user()->name }}</span>
+    <span>{{ session('painel_nome') }}</span>
     <form method="post" action="{{ route('sair') }}" style="all:unset">@csrf<button>Sair</button></form>
   </div>
 </header>
