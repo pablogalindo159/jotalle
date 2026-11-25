@@ -2,7 +2,7 @@
 
 Registro de fotos de caminhão (placa + carreta, data/hora, endereço, coordenadas, PIP de mapa e foto extra) e digitalização de documentos em PDF. App Android (Flutter) + API e painel web (Laravel).
 
-- `backend/` — Laravel 13: `POST /api/registros` (upload) e painel em `/` (filtrar, ver e baixar).
+- `backend/` — Laravel 13: `POST /api/registros` (upload) e painel em `/` com tela de login (filtrar, ver e baixar).
 - `app/` — Flutter (Android).
 - `deploy/` — Nginx e script de deploy.
 
@@ -11,7 +11,8 @@ Registro de fotos de caminhão (placa + carreta, data/hora, endereço, coordenad
 sudo apt install nginx php8.3-fpm php8.3-{cli,mbstring,xml,curl,sqlite3,zip} composer git
 sudo git clone https://github.com/pablogalindo159/jotalle /var/www/jotalle
 cd /var/www/jotalle
-sudo bash deploy/deploy.sh          # 1ª vez cria o .env; edite PAINEL_USER/PAINEL_PASSWORD e rode de novo
+sudo bash deploy/deploy.sh          # 1ª vez cria o .env; rode de novo para migrar o banco
+cd backend && php artisan painel:usuario "Seu Nome" voce@jotalle.com.br   # cria o login do painel (pede a senha)
 sudo cp deploy/nginx-jotalle.conf /etc/nginx/sites-available/jotalle
 sudo ln -s /etc/nginx/sites-available/jotalle /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx
 sudo certbot --nginx -d jotalle.infosaojose.com.br

@@ -9,7 +9,7 @@ composer install --no-dev --optimize-autoloader --no-interaction
 if [ ! -f .env ]; then
   cp .env.example .env
   php artisan key:generate --force
-  echo ">> .env criado. Edite PAINEL_USER e PAINEL_PASSWORD (nano backend/.env) e rode este script de novo."
+  echo ">> .env criado. Rode este script de novo."
   exit 0
 fi
 
