@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -87,11 +88,24 @@ class _ScanScreenState extends State<ScanScreen> {
         // Não foi para o servidor: guarda uma cópia para abrir/salvar no celular.
         final dl = File('${(await getApplicationDocumentsDirectory()).path}/documento_${agora.millisecondsSinceEpoch}.pdf');
         await arq.copy(dl.path);
+
+        // Salva sozinho as páginas digitalizadas (imagens) na galeria do celular.
+        var salvou = true;
+        for (final p in paginas) {
+          try {
+            await Gal.putImage(p, album: 'Jotalle');
+          } catch (_) {
+            salvou = false;
+          }
+        }
         setState(() {
           _pdf = dl;
-          _msg = st == EnvioStatus.rejeitado
-              ? 'Não foi enviado: o servidor recusou (${widget.fila.rejeitados[id]}). Abra o PDF abaixo e salve no celular.'
-              : 'Não foi enviado: sem conexão. O PDF ($n página(s)) ficou na fila e será enviado quando houver internet. Abra abaixo para salvar no celular.';
+          _msg = (st == EnvioStatus.rejeitado
+                  ? 'Não foi enviado: o servidor recusou (${widget.fila.rejeitados[id]}).'
+                  : 'Não foi enviado: sem conexão. O PDF ($n página(s)) ficou na fila e será enviado quando houver internet.') +
+              (salvou
+                  ? '\n\nAs páginas foram salvas na galeria do celular. Você também pode abrir o PDF ou enviar pelo WhatsApp abaixo.'
+                  : '\n\nNão foi possível salvar na galeria. Abra o PDF ou envie pelo WhatsApp abaixo.');
         });
       }
     } catch (e) {
