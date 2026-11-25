@@ -39,6 +39,12 @@ jobs:
           mkdir -p ~/.gradle/init.d
           cat > ~/.gradle/init.d/sem-lint.gradle <<'GRADLE'
           allprojects {
+            afterEvaluate { p ->
+              // plugins antigos (ex.: cunning_document_scanner) compilam com SDK 33; as dependências exigem 34+
+              if (p.hasProperty('android') && p.android.hasProperty('compileSdkVersion')) {
+                p.android.compileSdkVersion 36
+              }
+            }
             tasks.configureEach { t ->
               if (t.name.startsWith('lintVital') || t.name.startsWith('lintAnalyze') || t.name.startsWith('lintReport')) {
                 t.enabled = false
