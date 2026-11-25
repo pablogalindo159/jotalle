@@ -21,19 +21,32 @@ class JotalleApp extends StatefulWidget {
   State<JotalleApp> createState() => _JotalleAppState();
 }
 
-class _JotalleAppState extends State<JotalleApp> {
+class _JotalleAppState extends State<JotalleApp> with WidgetsBindingObserver {
   StreamSubscription? _sub;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.fila.enviarTudo();
+    // tenta de novo a cada 30 s enquanto houver pendentes (a rede pode demorar a estabilizar)
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (widget.fila.pendentes().isNotEmpty) widget.fila.enviarTudo();
+    });
     // quando a conexão voltar, esvazia a fila
     _sub = Connectivity().onConnectivityChanged.listen((_) => widget.fila.enviarTudo());
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) widget.fila.enviarTudo();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
     _sub?.cancel();
     super.dispose();
   }
