@@ -10,10 +10,10 @@ const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quint
 const views = ['home', 'foto', 'doc', 'cfg'];
 function ir(id) { views.forEach(v => $('#' + v).classList.toggle('hidden', v !== id)); window.scrollTo(0, 0); }
 document.querySelectorAll('[data-voltar]').forEach(b => b.onclick = () => ir('home'));
-$('#goFoto').onclick = () => { $('#placa').value = localStorage.getItem('placa') || ''; $('#carreta').value = localStorage.getItem('carreta') || ''; ir('foto'); };
+$('#goFoto').onclick = () => { $('#motorista').value = localStorage.getItem('motorista') || ''; $('#placa').value = localStorage.getItem('placa') || ''; $('#carreta').value = localStorage.getItem('carreta') || ''; ir('foto'); };
 $('#goDoc').onclick = () => ir('doc');
-$('#goCfg').onclick = () => { $('#apiKey').value = localStorage.getItem('apiKey') || ''; ir('cfg'); };
-$('#cfgSalvar').onclick = () => { localStorage.setItem('apiKey', $('#apiKey').value.trim()); ir('home'); };
+$('#goCfg').onclick = () => { $('#apiKey').value = localStorage.getItem('apiKey') || ''; $('#gKey').value = localStorage.getItem('googleKey') || ''; ir('cfg'); };
+$('#cfgSalvar').onclick = () => { localStorage.setItem('apiKey', $('#apiKey').value.trim()); localStorage.setItem('googleKey', $('#gKey').value.trim()); ir('home'); };
 
 function msg(el, texto, tipo) {
   el.className = 'msg' + (tipo ? ' ' + tipo : '');
@@ -90,16 +90,15 @@ async function fetchT(url, ms = 10000) {
   try { return await fetch(url, { signal: c.signal }); } finally { clearTimeout(t); }
 }
 
-async function endereco(lat, lng) {
+async function endOsm(lat, lng) {
   try {
-    const r = await fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=pt-BR`);
+    const r = await fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18&accept-language=pt-BR`);
     if (!r.ok) return null;
     const a = (await r.json()).address || {};
     const pri = (...ks) => { for (const k of ks) if (a[k]) return a[k]; return ''; };
     const iso = a['ISO3166-2-lvl4'] || '';
-    const rua = pri('road', 'pedestrian', 'highway');
     return {
-      rua: rua && a.house_number ? `${rua}, ${a.house_number}` : rua,
+      rua: pri('road', 'pedestrian', 'highway'), numero: a.house_number || '',
       bairro: pri('suburb', 'neighbourhood', 'quarter', 'city_district'),
       cidade: pri('city', 'town', 'village', 'municipality'),
       estado: iso.includes('-') ? iso.split('-').pop() : (a.state || ''),
@@ -107,12 +106,38 @@ async function endereco(lat, lng) {
   } catch (e) { return null; }
 }
 
+async function endGoogle(lat, lng) {
+  const key = localStorage.getItem('googleKey');
+  if (!key) return null;
+  try {
+    const r = await fetchT(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=pt-BR&key=${encodeURIComponent(key)}`);
+    const comps = ((await r.json()).results || [])[0]?.address_components || [];
+    const get = (t, curto) => { const c = comps.find(x => x.types.includes(t)); return c ? (curto ? c.short_name : c.long_name) : ''; };
+    return {
+      rua: get('route'), numero: get('street_number'),
+      bairro: get('sublocality_level_1') || get('sublocality'),
+      cidade: get('administrative_area_level_2'), estado: get('administrative_area_level_1', true),
+    };
+  } catch (e) { return null; }
+}
+
+/** Endereço com número da casa: OpenStreetMap primeiro; se faltar o número, tenta o Google (se houver chave). */
+async function endereco(lat, lng) {
+  let e = await endOsm(lat, lng);
+  if (!e || !e.rua || !e.numero) {
+    const g = await endGoogle(lat, lng);
+    if (g && g.rua) e = !e || !e.rua ? g : { ...e, numero: e.numero || g.numero };
+  }
+  return e;
+}
+
 async function obterLocal() {
   const c = await getPos();
   const end = (navigator.onLine && await endereco(c.latitude, c.longitude)) || { rua: '', bairro: '', cidade: '', estado: '' };
   return { lat: c.latitude, lng: c.longitude, end };
 }
-const linhaEnd = e => [e.rua, e.bairro, e.cidade, e.estado].filter(Boolean).join(', ');
+const ruaNum = e => (e.rua && e.numero ? `${e.rua}, ${e.numero}` : e.rua || '');
+const linhaEnd = e => [ruaNum(e), e.bairro, e.cidade, e.estado].filter(Boolean).join(', ');
 
 function dms(v, pos, neg) {
   const h = v < 0 ? neg : pos, a = Math.abs(v), g = Math.floor(a), mf = (a - g) * 60, m = Math.floor(mf), s = (mf - m) * 60;
@@ -191,7 +216,7 @@ function pip(g, im, x, y, lado, s) {
 }
 
 /** Desenha PLACA/CARRETA, dia/data/hora, endereço e coordenadas; PIPs no topo (mapa à esquerda, foto extra à direita). */
-async function carimbar({ principal, extra, mapa, placa, carreta, quando, local }) {
+async function carimbar({ principal, extra, mapa, motorista, placa, carreta, quando, local }) {
   const base = await lerImagem(principal, 1600);
   const w = base.width, h = base.height, s = w / 1080, m = 24 * s;
   const g = base.getContext('2d');
@@ -206,8 +231,9 @@ async function carimbar({ principal, extra, mapa, placa, carreta, quando, local 
     g.font = `${bold ? '800' : '500'} ${tam}px ${fam}`;
     quebra(g, txt, w - 2 * m, maxL).forEach(l => linhas.push({ l, tam, bold }));
   };
-  add(`PLACA ${placa}`, 54 * s, true);
-  add(`CARRETA ${carreta || '-'}`, 54 * s, true);
+  add(`MOTORISTA: ${motorista}`, 50 * s, true);
+  add(`PLACA CAVALO: ${placa}`, 50 * s, true);
+  add(`PLACA CARRETA: ${carreta || '-'}`, 50 * s, true);
   add(`${DIAS[quando.getDay()]}, ${pad(quando.getDate())}/${pad(quando.getMonth() + 1)}/${quando.getFullYear()} ${pad(quando.getHours())}:${pad(quando.getMinutes())}:${pad(quando.getSeconds())}`, 36 * s, false);
   add(local && linhaEnd(local.end) ? linhaEnd(local.end) : 'Endereço indisponível', 34 * s, false, 2);
   add(local ? `${dms(local.lat, 'N', 'S')}  ${dms(local.lng, 'E', 'W')}` : 'Coordenadas indisponíveis', 34 * s, false);
@@ -229,10 +255,10 @@ async function carimbar({ principal, extra, mapa, placa, carreta, quando, local 
 /* ---------- metadados ---------- */
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
 const isoLocal = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-function metaBase(tipo, placa, carreta, quando, local) {
+function metaBase(tipo, motorista, placa, carreta, quando, local) {
   return {
-    device_uuid: uuid(), tipo, placa_cavalo: placa, placa_carreta: carreta, tirado_em: isoLocal(quando),
-    rua: local && local.end.rua, bairro: local && local.end.bairro, cidade: local && local.end.cidade, estado: local && local.end.estado,
+    device_uuid: uuid(), tipo, motorista, placa_cavalo: placa, placa_carreta: carreta, tirado_em: isoLocal(quando),
+    rua: local && ruaNum(local.end), bairro: local && local.end.bairro, cidade: local && local.end.cidade, estado: local && local.end.estado,
     endereco: local && linhaEnd(local.end), latitude: local && local.lat, longitude: local && local.lng,
   };
 }
@@ -254,6 +280,7 @@ function atualizaSlot(slot, x, file) {
 }
 
 function validaPlacas() {
+  if ($('#motorista').value.trim().length < 3) { msg($('#fMsg'), 'Informe o nome do motorista.', 'erro'); return null; }
   const p = limpaPlaca($('#placa').value), c = limpaPlaca($('#carreta').value);
   if (p.length !== 7) { msg($('#fMsg'), 'A placa do caminhão precisa ter 7 caracteres.', 'erro'); return null; }
   if (c && c.length !== 7) { msg($('#fMsg'), 'A placa da carreta precisa ter 7 caracteres (ou deixe em branco).', 'erro'); return null; }
@@ -280,6 +307,8 @@ $('#xE').onclick = e => { e.stopPropagation(); F.extra = null; atualizaSlot($('#
 
 $('#fGerar').onclick = async () => {
   const pl = validaPlacas(); if (!pl || !F.principal) return;
+  const motorista = $('#motorista').value.trim().toUpperCase();
+  localStorage.setItem('motorista', motorista);
   localStorage.setItem('placa', pl.p); localStorage.setItem('carreta', pl.c);
   const btn = $('#fGerar'); btn.disabled = true;
   msg($('#fMsg'), '<span class="spin"></span>Gerando a foto…');
@@ -288,8 +317,8 @@ $('#fGerar').onclick = async () => {
     let local = null, aviso = '';
     try { local = await F.fixP; } catch (e) { aviso = (e && e.message || 'Sem localização') + ' A foto sai sem localização.'; }
     const mapa = local && navigator.onLine ? await mapaCanvas(local.lat, local.lng) : null;
-    const blob = await carimbar({ principal: F.principal, extra: F.extra, mapa, placa: pl.p, carreta: pl.c, quando: F.quando, local });
-    const meta = metaBase('foto', pl.p, pl.c, F.quando, local);
+    const blob = await carimbar({ principal: F.principal, extra: F.extra, mapa, motorista, placa: pl.p, carreta: pl.c, quando: F.quando, local });
+    const meta = metaBase('foto', motorista, pl.p, pl.c, F.quando, local);
     msg($('#fMsg'), '<span class="spin"></span>Enviando ao sistema…');
     const pendente = await enfileirar(meta, blob, `${meta.device_uuid}.jpg`);
     F.resultado = pendente ? blob : null;
@@ -395,7 +424,7 @@ $('#dGerar').onclick = async () => {
     try { local = await obterLocal(); } catch (e) { /* segue sem localização */ }
     const placa = limpaPlaca($('#dPlaca').value);
     const pdf = montaPdf(D.paginas);
-    const meta = metaBase('documento', placa, '', quando, local);
+    const meta = metaBase('documento', $('#dMotorista').value.trim().toUpperCase(), placa, '', quando, local);
     const n = D.paginas.length;
     $('#dAbrir').classList.add('hidden'); $('#dComp').classList.add('hidden');
     msg($('#dMsg'), '<span class="spin"></span>Enviando ao sistema…');

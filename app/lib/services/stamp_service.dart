@@ -27,8 +27,8 @@ String dms(double v, String pos, String neg) {
 String coordenadas(double lat, double lng) => '${dms(lat, 'N', 'S')}  ${dms(lng, 'E', 'W')}';
 
 class StampData {
-  StampData({required this.placa, required this.carreta, required this.quando, this.local});
-  final String placa, carreta;
+  StampData({required this.motorista, required this.placa, required this.carreta, required this.quando, this.local});
+  final String motorista, placa, carreta;
   final DateTime quando;
   final LocalFix? local;
 }
@@ -63,8 +63,9 @@ class StampService {
     // Faixa de texto (rodapé)
     final l = dados.local;
     final linhas = <TextPainter>[
-      _tp('PLACA ${dados.placa}', 54 * s, bold: true, maxW: w - 2 * margem),
-      _tp('CARRETA ${dados.carreta.isEmpty ? '-' : dados.carreta}', 54 * s, bold: true, maxW: w - 2 * margem),
+      _tp('MOTORISTA: ${dados.motorista}', 50 * s, bold: true, maxW: w - 2 * margem),
+      _tp('PLACA CAVALO: ${dados.placa}', 50 * s, bold: true, maxW: w - 2 * margem),
+      _tp('PLACA CARRETA: ${dados.carreta.isEmpty ? '-' : dados.carreta}', 50 * s, bold: true, maxW: w - 2 * margem),
       _tp(diaDataHora(dados.quando), 36 * s, maxW: w - 2 * margem),
       _tp(l == null || l.endereco.vazio ? 'Endereço indisponível' : l.endereco.linha, 34 * s, maxW: w - 2 * margem),
       _tp(l == null ? 'Coordenadas indisponíveis' : coordenadas(l.lat, l.lng), 34 * s, maxW: w - 2 * margem),

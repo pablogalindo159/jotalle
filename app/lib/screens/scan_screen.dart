@@ -21,6 +21,7 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> {
+  final _motorista = TextEditingController();
   final _placa = TextEditingController();
   bool _gerando = false;
   String? _msg;
@@ -64,9 +65,10 @@ class _ScanScreenState extends State<ScanScreen> {
       await widget.fila.adicionar(UploadItem({
         'device_uuid': id,
         'tipo': 'documento',
+        'motorista': _motorista.text.trim().toUpperCase(),
         'placa_cavalo': placa,
         'tirado_em': agora.toIso8601String(),
-        'rua': local?.endereco.rua,
+        'rua': local?.endereco.ruaNum,
         'bairro': local?.endereco.bairro,
         'cidade': local?.endereco.cidade,
         'estado': local?.endereco.estado,
@@ -98,9 +100,15 @@ class _ScanScreenState extends State<ScanScreen> {
         body: SafeArea(
           child: ListView(padding: const EdgeInsets.all(20), children: [
             TextField(
+              controller: _motorista,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(labelText: 'Motorista (opcional)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 14),
+            TextField(
               controller: _placa,
               textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(labelText: 'Placa do caminhão (opcional)', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'Placa do cavalo (opcional)', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 20),
             FilledButton.icon(

@@ -15,6 +15,7 @@ class RegistroApiController extends Controller
         $d = $request->validate([
             'device_uuid' => 'required|uuid',
             'tipo' => 'required|in:foto,documento',
+            'motorista' => 'nullable|string|max:120',
             'placa_cavalo' => 'nullable|string|max:10|required_if:tipo,foto',
             'placa_carreta' => 'nullable|string|max:10',
             'tirado_em' => 'required|date',
@@ -45,6 +46,7 @@ class RegistroApiController extends Controller
         $registro = Registro::create([
             'device_uuid' => $d['device_uuid'],
             'tipo' => $d['tipo'],
+            'motorista' => isset($d['motorista']) && trim($d['motorista']) !== '' ? mb_strtoupper(trim($d['motorista'])) : null,
             'placa_cavalo' => self::placa($d['placa_cavalo'] ?? null),
             'placa_carreta' => self::placa($d['placa_carreta'] ?? null),
             'tirado_em' => $tirado,

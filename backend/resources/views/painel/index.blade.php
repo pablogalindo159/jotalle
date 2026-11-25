@@ -45,6 +45,7 @@
 <main>
   <h2 class="tit">Fotos e documentos</h2>
   <form method="get">
+    <label>Motorista<input name="motorista" value="{{ request('motorista') }}"></label>
     <label>Placa (cavalo ou carreta)<input name="placa" value="{{ request('placa') }}" placeholder="ABC1D23"></label>
     <label>Tipo
       <select name="tipo">
@@ -74,8 +75,9 @@
         </a>
         <div class="info">
           <span class="tag {{ $r->tipo === 'documento' ? 'doc' : '' }}">{{ $r->tipo === 'foto' ? 'Foto' : 'Documento' }}</span><br>
+          @if ($r->motorista)<b>{{ $r->motorista }}</b><br>@endif
           @if ($r->placa_cavalo || $r->placa_carreta)
-            <b>{{ $r->placa_cavalo }}</b>@if($r->placa_carreta) · carreta {{ $r->placa_carreta }}@endif<br>
+            Cavalo {{ $r->placa_cavalo ?: '-' }}@if($r->placa_carreta) · Carreta {{ $r->placa_carreta }}@endif<br>
           @endif
           {{ $r->tirado_em->format('d/m/Y H:i') }}<br>
           <span class="mut">

@@ -5,11 +5,16 @@ import '../config.dart';
 import 'settings.dart';
 
 class Endereco {
-  Endereco({this.rua = '', this.bairro = '', this.cidade = '', this.estado = ''});
-  final String rua, bairro, cidade, estado;
+  Endereco({this.rua = '', this.numero = '', this.bairro = '', this.cidade = '', this.estado = ''});
+  final String rua, numero, bairro, cidade, estado;
 
-  String get linha => [rua, bairro, cidade, estado].where((e) => e.isNotEmpty).join(', ');
+  /// "Rua X, 123" (só o nome da rua se o número não for encontrado)
+  String get ruaNum => numero.isNotEmpty && rua.isNotEmpty ? '$rua, $numero' : rua;
+  String get linha => [ruaNum, bairro, cidade, estado].where((e) => e.isNotEmpty).join(', ');
   bool get vazio => linha.isEmpty;
+
+  Endereco comNumero(String n) =>
+      Endereco(rua: rua, numero: n, bairro: bairro, cidade: cidade, estado: estado);
 }
 
 class LocalFix {
@@ -43,19 +48,26 @@ class LocationService {
     final ordem = settings.mapa == MapaProvedor.google
         ? [_google, _osm]
         : [_osm, _google];
+    Endereco? base;
     for (final f in ordem) {
       try {
         final e = await f(lat, lng).timeout(const Duration(seconds: 10));
-        if (e != null && !e.vazio) return e;
+        if (e == null || e.vazio) continue;
+        if (base == null) {
+          base = e;
+        } else if (base.numero.isEmpty && e.numero.isNotEmpty) {
+          base = base.comNumero(e.numero); // número da casa vindo do outro provedor
+        }
+        if (base.numero.isNotEmpty) break;
       } catch (_) {}
     }
-    return Endereco();
+    return base ?? Endereco();
   }
 
   Future<Endereco?> _osm(double lat, double lng) async {
     final r = await http.get(
       Uri.https('nominatim.openstreetmap.org', '/reverse', {
-        'format': 'jsonv2', 'lat': '$lat', 'lon': '$lng', 'addressdetails': '1', 'accept-language': 'pt-BR',
+        'format': 'jsonv2', 'lat': '$lat', 'lon': '$lng', 'addressdetails': '1', 'zoom': '18', 'accept-language': 'pt-BR',
       }),
       headers: {'User-Agent': kUserAgent},
     );
@@ -64,10 +76,9 @@ class LocationService {
     String s(List<String> ks) => ks.map((k) => a[k]).whereType<String>().firstWhere((_) => true, orElse: () => '');
     final iso = (a['ISO3166-2-lvl4'] as String?) ?? '';
     final uf = iso.contains('-') ? iso.split('-').last : (a['state'] as String? ?? '');
-    final rua = s(['road', 'pedestrian', 'highway']);
-    final num = a['house_number'] as String?;
     return Endereco(
-      rua: num != null && rua.isNotEmpty ? '$rua, $num' : rua,
+      rua: s(['road', 'pedestrian', 'highway']),
+      numero: (a['house_number'] as String?) ?? '',
       bairro: s(['suburb', 'neighbourhood', 'quarter', 'city_district']),
       cidade: s(['city', 'town', 'village', 'municipality']),
       estado: uf,
@@ -90,10 +101,9 @@ class LocationService {
       }
       return '';
     }
-    final num = get('street_number');
-    final rua = get('route');
     return Endereco(
-      rua: num.isNotEmpty && rua.isNotEmpty ? '$rua, $num' : rua,
+      rua: get('route'),
+      numero: get('street_number'),
       bairro: get('sublocality_level_1').isNotEmpty ? get('sublocality_level_1') : get('sublocality'),
       cidade: get('administrative_area_level_2'),
       estado: get('administrative_area_level_1', curto: true),

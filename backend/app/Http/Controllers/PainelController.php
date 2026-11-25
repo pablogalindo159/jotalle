@@ -16,6 +16,9 @@ class PainelController extends Controller
             $q->where(fn ($w) => $w->where('placa_cavalo', 'like', "%$busca%")
                 ->orWhere('placa_carreta', 'like', "%$busca%"));
         }
+        if ($request->filled('motorista')) {
+            $q->where('motorista', 'like', '%'.trim($request->query('motorista')).'%');
+        }
         if (in_array($request->query('tipo'), ['foto', 'documento'], true)) {
             $q->where('tipo', $request->query('tipo'));
         }

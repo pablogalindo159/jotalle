@@ -21,6 +21,9 @@ class Settings {
   MapaProvedor get mapa => _p.getString('mapa') == 'google' ? MapaProvedor.google : MapaProvedor.osm;
   set mapa(MapaProvedor v) => _p.setString('mapa', v.name);
 
+  String get ultimoMotorista => _p.getString('ultimoMotorista') ?? '';
+  set ultimoMotorista(String v) => _p.setString('ultimoMotorista', v);
+
   String get ultimaPlaca => _p.getString('ultimaPlaca') ?? '';
   set ultimaPlaca(String v) => _p.setString('ultimaPlaca', v);
 

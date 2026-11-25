@@ -29,7 +29,9 @@
 <section id="foto" class="view hidden">
   <div class="topo"><button data-voltar>‹ Voltar</button></div>
   <h1>Foto</h1>
-  <label class="l" for="placa">Placa do caminhão</label>
+  <label class="l" for="motorista">Motorista</label>
+  <input id="motorista" type="text" maxlength="60" autocomplete="off" autocapitalize="characters" placeholder="NOME DO MOTORISTA">
+  <label class="l" for="placa">Placa do cavalo (caminhão)</label>
   <input id="placa" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="ABC1D23">
   <label class="l" for="carreta">Placa da carreta (opcional)</label>
   <input id="carreta" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="XYZ9K87">
@@ -51,7 +53,9 @@
 <section id="doc" class="view hidden">
   <div class="topo"><button data-voltar>‹ Voltar</button></div>
   <h1>Digitalizar documento</h1>
-  <label class="l" for="dPlaca">Placa do caminhão (opcional)</label>
+  <label class="l" for="dMotorista">Motorista (opcional)</label>
+  <input id="dMotorista" type="text" maxlength="60" autocomplete="off" autocapitalize="characters" placeholder="NOME DO MOTORISTA">
+  <label class="l" for="dPlaca">Placa do cavalo (opcional)</label>
   <input id="dPlaca" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="ABC1D23">
   <label class="chk"><input type="checkbox" id="dPb" checked> Modo documento (preto e branco, mais nítido)</label>
   <input type="file" id="inD" accept="image/*" capture="environment" hidden>
@@ -69,6 +73,8 @@
   <h1>Configurações</h1>
   <label class="l" for="apiKey">Chave da API (só se o servidor exigir)</label>
   <input id="apiKey" class="n" type="password" autocomplete="off">
+  <label class="l" for="gKey">Chave Google Maps (opcional — melhora o número da casa)</label>
+  <input id="gKey" class="n" type="password" autocomplete="off">
   <button class="btn" id="cfgSalvar">Salvar</button>
   <div class="msg" style="margin-top:22px">Para instalar: toque em <b>Compartilhar</b> no Safari e escolha <b>Adicionar à Tela de Início</b>.</div>
 </section>

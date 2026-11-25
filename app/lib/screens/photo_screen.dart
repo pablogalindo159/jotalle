@@ -22,6 +22,7 @@ class PhotoScreen extends StatefulWidget {
 
 class _PhotoScreenState extends State<PhotoScreen> {
   final _form = GlobalKey<FormState>();
+  late final _motorista = TextEditingController(text: widget.settings.ultimoMotorista);
   late final _placa = TextEditingController(text: widget.settings.ultimaPlaca);
   late final _carreta = TextEditingController(text: widget.settings.ultimaCarreta);
   final _picker = ImagePicker();
@@ -61,7 +62,9 @@ class _PhotoScreenState extends State<PhotoScreen> {
     setState(() { _gerando = true; _aviso = null; });
     try {
       final s = widget.settings;
+      final motorista = _motorista.text.trim().toUpperCase();
       final placa = _limpa(_placa.text), carreta = _limpa(_carreta.text);
+      s.ultimoMotorista = motorista;
       s.ultimaPlaca = placa;
       s.ultimaCarreta = carreta;
 
@@ -77,7 +80,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
         principal: _principal!,
         extra: _extra,
         mapaPng: mapa,
-        dados: StampData(placa: placa, carreta: carreta, quando: _quando!, local: local),
+        dados: StampData(motorista: motorista, placa: placa, carreta: carreta, quando: _quando!, local: local),
       );
 
       final id = const Uuid().v4();
@@ -88,10 +91,11 @@ class _PhotoScreenState extends State<PhotoScreen> {
       await widget.fila.adicionar(UploadItem({
         'device_uuid': id,
         'tipo': 'foto',
+        'motorista': motorista,
         'placa_cavalo': placa,
         'placa_carreta': carreta,
         'tirado_em': _quando!.toIso8601String(),
-        'rua': local?.endereco.rua,
+        'rua': local?.endereco.ruaNum,
         'bairro': local?.endereco.bairro,
         'cidade': local?.endereco.cidade,
         'estado': local?.endereco.estado,
@@ -133,10 +137,17 @@ class _PhotoScreenState extends State<PhotoScreen> {
               key: _form,
               child: Column(children: [
                 TextFormField(
+                  controller: _motorista,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(labelText: 'Motorista', border: OutlineInputBorder()),
+                  validator: (v) => (v ?? '').trim().length >= 3 ? null : 'Informe o nome do motorista',
+                ),
+                const SizedBox(height: 14),
+                TextFormField(
                   controller: _placa,
                   textCapitalization: TextCapitalization.characters,
                   inputFormatters: [LengthLimitingTextInputFormatter(8)],
-                  decoration: const InputDecoration(labelText: 'Placa do caminhão', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Placa do cavalo (caminhão)', border: OutlineInputBorder()),
                   validator: (v) => _limpa(v ?? '').length == 7 ? null : 'Placa com 7 caracteres',
                 ),
                 const SizedBox(height: 14),
