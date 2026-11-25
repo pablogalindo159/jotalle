@@ -34,18 +34,20 @@ const putItem = async i => req((await store('readwrite')).put(i));
 const allItems = async () => req((await store('readonly')).getAll());
 const delItem = async id => req((await store('readwrite')).delete(id));
 
+/** Guarda na fila, tenta enviar e devolve true se ficou pendente (sem internet / servidor fora). */
 async function enfileirar(meta, blob, nome) {
   await putItem({ id: meta.device_uuid, meta, nome, mime: blob.type, buf: await blob.arrayBuffer() });
   renderPend();
-  flush();
+  await flush();
+  return (await allItems()).some(i => i.id === meta.device_uuid);
 }
 
-let enviando = false;
-async function flush() {
-  if (enviando || !navigator.onLine) return 0;
-  enviando = true;
-  let ok = 0;
-  try {
+let fluxo = null;
+function flush() {
+  if (!navigator.onLine) return Promise.resolve(0);
+  if (fluxo) return fluxo.then(() => flush());
+  fluxo = (async () => {
+    let ok = 0;
     for (const it of await allItems()) {
       const fd = new FormData();
       Object.entries(it.meta).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') fd.append(k, v); });
@@ -57,8 +59,9 @@ async function flush() {
       try { r = await fetch('/api/registros', { method: 'POST', body: fd, headers: h }); } catch (e) { break; }
       if (r.ok || r.status === 422) { await delItem(it.id); if (r.ok) ok++; } else break;
     }
-  } finally { enviando = false; renderPend(); }
-  return ok;
+    return ok;
+  })().catch(() => 0).finally(() => { fluxo = null; renderPend(); });
+  return fluxo;
 }
 
 async function renderPend() {
@@ -280,16 +283,23 @@ $('#fGerar').onclick = async () => {
   localStorage.setItem('placa', pl.p); localStorage.setItem('carreta', pl.c);
   const btn = $('#fGerar'); btn.disabled = true;
   msg($('#fMsg'), '<span class="spin"></span>Gerando a foto…');
+  $('#fPrev').classList.add('hidden'); $('#fSalvar').classList.add('hidden');
   try {
     let local = null, aviso = '';
     try { local = await F.fixP; } catch (e) { aviso = (e && e.message || 'Sem localização') + ' A foto sai sem localização.'; }
     const mapa = local && navigator.onLine ? await mapaCanvas(local.lat, local.lng) : null;
     const blob = await carimbar({ principal: F.principal, extra: F.extra, mapa, placa: pl.p, carreta: pl.c, quando: F.quando, local });
     const meta = metaBase('foto', pl.p, pl.c, F.quando, local);
-    await enfileirar(meta, blob, `${meta.device_uuid}.jpg`);
-    F.resultado = blob;
-    $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
-    msg($('#fMsg'), 'Foto gerada e na fila de envio.' + (aviso ? '<br>' + aviso : ''), aviso ? '' : 'ok');
+    msg($('#fMsg'), '<span class="spin"></span>Enviando ao sistema…');
+    const pendente = await enfileirar(meta, blob, `${meta.device_uuid}.jpg`);
+    F.resultado = pendente ? blob : null;
+    if (pendente) {
+      // sem internet: foto fica na fila e dá para salvar no aparelho
+      $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
+      msg($('#fMsg'), 'Sem conexão: a foto ficou na fila e será enviada quando houver internet. Se quiser, salve no iPhone.' + (aviso ? '<br>' + aviso : ''));
+    } else {
+      msg($('#fMsg'), 'Foto enviada ao sistema ✓' + (aviso ? '<br>' + aviso : ''), aviso ? '' : 'ok');
+    }
     F.principal = F.extra = null;
     atualizaSlot($('#slotP'), $('#xP'), null); atualizaSlot($('#slotE'), $('#xE'), null);
   } catch (e) {
@@ -386,12 +396,19 @@ $('#dGerar').onclick = async () => {
     const placa = limpaPlaca($('#dPlaca').value);
     const pdf = montaPdf(D.paginas);
     const meta = metaBase('documento', placa, '', quando, local);
-    await enfileirar(meta, pdf, `${meta.device_uuid}.pdf`);
-    D.pdf = pdf;
-    const url = URL.createObjectURL(pdf);
-    const a = $('#dAbrir'); a.href = url; a.download = `documento-${quando.getTime()}.pdf`; a.classList.remove('hidden');
-    $('#dComp').classList.remove('hidden');
-    msg($('#dMsg'), `PDF com ${D.paginas.length} página(s) gerado e na fila de envio.`, 'ok');
+    const n = D.paginas.length;
+    $('#dAbrir').classList.add('hidden'); $('#dComp').classList.add('hidden');
+    msg($('#dMsg'), '<span class="spin"></span>Enviando ao sistema…');
+    const pendente = await enfileirar(meta, pdf, `${meta.device_uuid}.pdf`);
+    D.pdf = pendente ? pdf : null;
+    if (pendente) {
+      // sem internet: PDF fica na fila e dá para abrir/salvar no aparelho
+      const a = $('#dAbrir'); a.href = URL.createObjectURL(pdf); a.download = `documento-${quando.getTime()}.pdf`; a.classList.remove('hidden');
+      $('#dComp').classList.remove('hidden');
+      msg($('#dMsg'), `Sem conexão: o PDF (${n} página(s)) ficou na fila e será enviado quando houver internet. Se quiser, salve no aparelho.`);
+    } else {
+      msg($('#dMsg'), `PDF com ${n} página(s) enviado ao sistema ✓`, 'ok');
+    }
     D.paginas = []; renderPags(); btn.disabled = true;
   } catch (e) {
     msg($('#dMsg'), 'Erro: ' + (e && e.message || e), 'erro'); btn.disabled = !D.paginas.length;
