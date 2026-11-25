@@ -29,7 +29,8 @@ class _PhotoScreenState extends State<PhotoScreen> {
   final _carreta = TextEditingController();
   final _picker = ImagePicker();
 
-  File? _principal, _extra;
+  File? _principal, _extra, _extraEsq;
+  bool _mapa = true; // PIP do mapa (opcional); desmarcado libera outra foto no lugar
   DateTime? _quando;
   Future<LocalFix>? _fix;
   bool _gerando = false;
@@ -52,6 +53,11 @@ class _PhotoScreenState extends State<PhotoScreen> {
       _principal = f;
       _quando = DateTime.now();
     });
+  }
+
+  Future<void> _fotoExtraEsq() async {
+    final f = await _tirar();
+    if (f != null) setState(() => _extraEsq = f);
   }
 
   Future<void> _fotoExtra() async {
@@ -99,10 +105,11 @@ class _PhotoScreenState extends State<PhotoScreen> {
         _aviso = '$e (a foto sai sem localização)';
       }
 
-      final mapa = local == null ? null : await MapService(s).gerar(local.lat, local.lng);
+      final mapa = (!_mapa || local == null) ? null : await MapService(s).gerar(local.lat, local.lng);
       final jpg = await StampService().gerar(
         principal: _principal!,
         extra: _extra,
+        extraEsq: _mapa ? null : _extraEsq,
         mapaPng: mapa,
         dados: StampData(motorista: motorista, placa: placa, carreta: carreta, quando: _quando!, local: local),
       );
@@ -111,6 +118,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
       final dir = Directory('${(await getApplicationDocumentsDirectory()).path}/fila')..createSync(recursive: true);
       final arq = File('${dir.path}/$id.jpg');
       await arq.writeAsBytes(jpg);
+      final copia = await arq.copy('${(await getTemporaryDirectory()).path}/Jotalle_$id.jpg');
 
       await widget.fila.adicionar(UploadItem({
         'device_uuid': id,
@@ -132,11 +140,16 @@ class _PhotoScreenState extends State<PhotoScreen> {
 
       if (!mounted) return;
       if (st == EnvioStatus.enviado) {
-        await _mostrarResultado(
+        final zapOk = await _mostrarResultado(
           ok: true,
           titulo: 'Enviado com sucesso!',
           texto: 'A foto foi salva no servidor.${_aviso != null ? '\n\n$_aviso' : ''}',
+          whatsapp: true,
         );
+        if (zapOk == true) {
+          await Share.shareXFiles([XFile(copia.path)],
+              text: 'Jotalle\nMotorista: $motorista\nPlaca cavalo: $placa\nPlaca carreta: $carreta');
+        }
       } else {
         // Não foi para o servidor: salva sozinho na galeria e oferece enviar pelo WhatsApp.
         var salvou = true;
@@ -206,6 +219,14 @@ class _PhotoScreenState extends State<PhotoScreen> {
               ]),
             ),
             const SizedBox(height: 20),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _mapa,
+              onChanged: (v) => setState(() => _mapa = v ?? true),
+              title: const Text('Incluir mapa da localização na foto'),
+            ),
+            const SizedBox(height: 8),
             Row(children: [
               Expanded(child: _Slot(titulo: 'Foto principal', arquivo: _principal, onTap: _fotoPrincipal)),
               const SizedBox(width: 12),
@@ -216,6 +237,20 @@ class _PhotoScreenState extends State<PhotoScreen> {
                       onTap: _fotoExtra,
                       onLimpar: _extra == null ? null : () => setState(() => _extra = null))),
             ]),
+            if (!_mapa)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(children: [
+                  Expanded(
+                      child: _Slot(
+                          titulo: '+ Foto extra 2 (opcional)',
+                          arquivo: _extraEsq,
+                          onTap: _fotoExtraEsq,
+                          onLimpar: _extraEsq == null ? null : () => setState(() => _extraEsq = null))),
+                  const SizedBox(width: 12),
+                  const Expanded(child: SizedBox()),
+                ]),
+              ),
             if (_aviso != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_aviso!, style: const TextStyle(color: Colors.orange))),
             const SizedBox(height: 24),
             FilledButton.icon(

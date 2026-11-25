@@ -41,6 +41,7 @@ class StampService {
     required StampData dados,
     Uint8List? mapaPng,
     File? extra,
+    File? extraEsq, // usada no lugar do mapa quando o mapa está desmarcado
   }) async {
     final base = await _decode(await principal.readAsBytes());
     final w = base.width.toDouble(), h = base.height.toDouble();
@@ -55,6 +56,9 @@ class StampService {
     final margem = 24 * s;
     if (mapaPng != null) {
       await _pip(c, await _decode(mapaPng), ui.Rect.fromLTWH(margem, margem, pip, pip), s);
+    }
+    if (mapaPng == null && extraEsq != null) {
+      await _pip(c, await _decode(await extraEsq.readAsBytes()), ui.Rect.fromLTWH(margem, margem, pip, pip), s);
     }
     if (extra != null) {
       await _pip(c, await _decode(await extra.readAsBytes()), ui.Rect.fromLTWH(w - margem - pip, margem, pip, pip), s);

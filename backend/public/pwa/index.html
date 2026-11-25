@@ -35,17 +35,20 @@
   <label class="l" for="carreta">Placa da carreta</label>
   <input id="carreta" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="XYZ9K87">
 
+  <label class="chk"><input type="checkbox" id="fMapa" checked> Incluir mapa da localização na foto</label>
   <div class="slots">
     <div class="slot" id="slotP">📷<br>Foto principal<button class="x hidden" id="xP">✕</button></div>
     <div class="slot" id="slotE">+ Foto extra<br>(opcional)<button class="x hidden" id="xE">✕</button></div>
+    <div class="slot hidden" id="slotL">+ Foto extra 2<br>(opcional)<button class="x hidden" id="xL">✕</button></div>
   </div>
   <input type="file" id="inP" accept="image/*" capture="environment" hidden>
   <input type="file" id="inE" accept="image/*" capture="environment" hidden>
+  <input type="file" id="inL" accept="image/*" capture="environment" hidden>
 
   <div class="msg hidden" id="fMsg"></div>
   <button class="btn" id="fGerar" disabled>Gerar e enviar</button>
   <img class="prev hidden" id="fPrev" alt="">
-  <button class="btn hidden" id="fSalvar" style="background:#25D366">Enviar pelo WhatsApp / salvar</button>
+  <button class="btn hidden" id="fSalvar" style="background:#25D366">Enviar pelo WhatsApp</button>
 </section>
 
 <!-- DOCUMENTO -->
@@ -63,7 +66,7 @@
   <div class="msg hidden" id="dMsg"></div>
   <button class="btn" id="dGerar" disabled>Gerar PDF e enviar</button>
   <a class="btn sec hidden" id="dAbrir" style="display:block;text-align:center;text-decoration:none" target="_blank">Abrir / baixar PDF</a>
-  <button class="btn hidden" id="dComp" style="background:#25D366">Enviar pelo WhatsApp / salvar</button>
+  <button class="btn hidden" id="dComp" style="background:#25D366">Enviar pelo WhatsApp</button>
 </section>
 
 <script src="/pwa/app.js"></script>

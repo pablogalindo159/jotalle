@@ -88,6 +88,7 @@ class _ScanScreenState extends State<ScanScreen> {
       final dir = Directory('${(await getApplicationDocumentsDirectory()).path}/fila')..createSync(recursive: true);
       final arq = File('${dir.path}/$id.pdf');
       await arq.writeAsBytes(await doc.save());
+      final copia = await arq.copy('${(await getTemporaryDirectory()).path}/Jotalle_documento_$id.pdf');
 
       final placa = _placa.text.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
       await widget.fila.adicionar(UploadItem({
@@ -110,7 +111,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
       if (st == EnvioStatus.enviado) {
         if (!mounted) return;
-        await showDialog<void>(
+        final zap = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
           builder: (_) => AlertDialog(
@@ -118,9 +119,19 @@ class _ScanScreenState extends State<ScanScreen> {
             title: const Text('Enviado com sucesso!', textAlign: TextAlign.center),
             content: Text('O PDF ($n página(s)) foi salvo no servidor.', textAlign: TextAlign.center),
             actionsAlignment: MainAxisAlignment.center,
-            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+            actionsOverflowDirection: VerticalDirection.down,
+            actions: [
+              FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                onPressed: () => Navigator.pop(context, true),
+                icon: const Icon(Icons.send),
+                label: const Text('Enviar pelo WhatsApp'),
+              ),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('OK')),
+            ],
           ),
         );
+        if (zap == true) await Share.shareXFiles([XFile(copia.path)], text: 'Documento Jotalle');
         if (mounted) Navigator.pop(context); // volta para a tela inicial
       } else {
         // Não foi para o servidor: guarda uma cópia para abrir/salvar no celular.

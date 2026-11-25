@@ -227,13 +227,14 @@ function pip(g, im, x, y, lado, s) {
 }
 
 /** Desenha PLACA/CARRETA, dia/data/hora, endereço e coordenadas; PIPs no topo (mapa à esquerda, foto extra à direita). */
-async function carimbar({ principal, extra, mapa, motorista, placa, carreta, quando, local }) {
+async function carimbar({ principal, extra, extraEsq, mapa, motorista, placa, carreta, quando, local }) {
   const base = await lerImagem(principal, 1600);
   const w = base.width, h = base.height, s = w / 1080, m = 24 * s;
   const g = base.getContext('2d');
 
   const lado = w * 0.30;
   if (mapa) pip(g, mapa, m, m, lado, s);
+  else if (extraEsq) pip(g, await lerImagem(extraEsq, 800), m, m, lado, s);
   if (extra) pip(g, await lerImagem(extra, 800), w - m - lado, m, lado, s);
 
   const fam = '-apple-system, "Helvetica Neue", Arial, sans-serif';
@@ -281,7 +282,7 @@ async function compartilhar(blob, nome, tipoMime, texto) {
 }
 
 /* ---------- FOTO ---------- */
-const F = { principal: null, extra: null, quando: null, fixP: null, resultado: null, resumo: '' };
+const F = { principal: null, extra: null, extraEsq: null, quando: null, fixP: null, resultado: null, resumo: '' };
 
 function atualizaSlot(slot, x, file) {
   slot.classList.toggle('tem', !!file);
@@ -314,6 +315,10 @@ $('#inP').onchange = e => {
 };
 $('#inE').onchange = e => { const f = e.target.files[0]; if (!f) return; F.extra = f; atualizaSlot($('#slotE'), $('#xE'), f); };
 $('#xP').onclick = e => { e.stopPropagation(); F.principal = null; atualizaSlot($('#slotP'), $('#xP'), null); };
+$('#slotL').onclick = e => { if (e.target.id === 'xL') return; $('#inL').value = ''; $('#inL').click(); };
+$('#inL').onchange = e => { const f = e.target.files[0]; if (!f) return; F.extraEsq = f; atualizaSlot($('#slotL'), $('#xL'), f); };
+$('#xL').onclick = e => { e.stopPropagation(); F.extraEsq = null; atualizaSlot($('#slotL'), $('#xL'), null); };
+$('#fMapa').onchange = e => { $('#slotL').classList.toggle('hidden', e.target.checked); if (e.target.checked) { F.extraEsq = null; atualizaSlot($('#slotL'), $('#xL'), null); } };
 $('#xE').onclick = e => { e.stopPropagation(); F.extra = null; atualizaSlot($('#slotE'), $('#xE'), null); };
 
 $('#fGerar').onclick = async () => {
@@ -325,15 +330,16 @@ $('#fGerar').onclick = async () => {
   try {
     let local = null, aviso = '';
     try { local = await F.fixP; } catch (e) { aviso = (e && e.message || 'Sem localização') + ' A foto sai sem localização.'; }
-    const mapa = local && navigator.onLine ? await mapaCanvas(local.lat, local.lng) : null;
-    const blob = await carimbar({ principal: F.principal, extra: F.extra, mapa, motorista, placa: pl.p, carreta: pl.c, quando: F.quando, local });
+    const mapa = $('#fMapa').checked && local && navigator.onLine ? await mapaCanvas(local.lat, local.lng) : null;
+    const blob = await carimbar({ principal: F.principal, extra: F.extra, extraEsq: $('#fMapa').checked ? null : F.extraEsq, mapa, motorista, placa: pl.p, carreta: pl.c, quando: F.quando, local });
     const meta = metaBase('foto', motorista, pl.p, pl.c, F.quando, local);
     msg($('#fMsg'), '<span class="spin"></span>Enviando ao sistema…');
     const r = await enfileirar(meta, blob, `${meta.device_uuid}.jpg`);
-    F.resultado = r.status === 'enviado' ? null : blob;
+    F.resultado = blob;
     F.resumo = `Jotalle\nMotorista: ${motorista}\nPlaca cavalo: ${pl.p}\nPlaca carreta: ${pl.c}`;
     if (r.status === 'enviado') {
       msg($('#fMsg'), '<b>✓ Enviado com sucesso!</b><br>A foto foi salva no servidor.' + (aviso ? '<br>' + aviso : ''), 'ok');
+      $('#fSalvar').classList.remove('hidden');
     } else {
       // não chegou ao servidor: mostra o motivo e oferece salvar no celular
       $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
@@ -341,8 +347,8 @@ $('#fGerar').onclick = async () => {
         ? `<b>Não foi enviado.</b><br>O servidor recusou: ${r.motivo}. Envie pelo WhatsApp ou salve a foto.`
         : '<b>Não foi enviado.</b><br>Sem conexão com o servidor. A foto ficou na fila e será enviada quando houver internet. Se quiser, envie pelo WhatsApp (ou escolha "Salvar imagem" na lista).', 'erro');
     }
-    F.principal = F.extra = null;
-    atualizaSlot($('#slotP'), $('#xP'), null); atualizaSlot($('#slotE'), $('#xE'), null);
+    F.principal = F.extra = F.extraEsq = null;
+    atualizaSlot($('#slotP'), $('#xP'), null); atualizaSlot($('#slotE'), $('#xE'), null); atualizaSlot($('#slotL'), $('#xL'), null);
   } catch (e) {
     msg($('#fMsg'), 'Erro: ' + (e && e.message || e), 'erro');
     btn.disabled = !F.principal;
@@ -441,9 +447,10 @@ $('#dGerar').onclick = async () => {
     $('#dAbrir').classList.add('hidden'); $('#dComp').classList.add('hidden');
     msg($('#dMsg'), '<span class="spin"></span>Enviando ao sistema…');
     const r = await enfileirar(meta, pdf, `${meta.device_uuid}.pdf`);
-    D.pdf = r.status === 'enviado' ? null : pdf;
+    D.pdf = pdf;
     if (r.status === 'enviado') {
       msg($('#dMsg'), `<b>✓ Enviado com sucesso!</b><br>O PDF (${n} página(s)) foi salvo no servidor.`, 'ok');
+      $('#dComp').classList.remove('hidden');
     } else {
       // não chegou ao servidor: mostra o motivo e oferece abrir/salvar no celular
       const a = $('#dAbrir'); a.href = URL.createObjectURL(pdf); a.download = `documento-${quando.getTime()}.pdf`; a.classList.remove('hidden');
