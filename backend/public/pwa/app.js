@@ -282,8 +282,10 @@ async function compartilhar(blob, nome, tipoMime, texto) {
 }
 
 /** Aviso de sucesso com WhatsApp e Fechar; ao tocar em qualquer um volta para o início. */
-function sucesso(texto, compartilha) {
+function sucesso(texto, compartilha, imgUrl) {
   $('#modalTxt').textContent = texto;
+  $('#modalImg').src = imgUrl || '';
+  $('#modalImg').classList.toggle('hidden', !imgUrl);
   $('#modal').classList.remove('hidden');
   const fim = () => { $('#modal').classList.add('hidden'); ir('home'); };
   $('#modalFechar').onclick = fim;
@@ -349,7 +351,7 @@ $('#fGerar').onclick = async () => {
     if (r.status === 'enviado') {
       msg($('#fMsg'), '');
       sucesso('A foto foi salva no servidor.' + (aviso ? '\n' + aviso : ''),
-        () => compartilhar(blob, 'foto-jotalle.jpg', 'image/jpeg', F.resumo));
+        () => compartilhar(blob, 'foto-jotalle.jpg', 'image/jpeg', F.resumo), URL.createObjectURL(blob));
     } else {
       // não chegou ao servidor: mostra o motivo e oferece salvar no celular
       $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
@@ -461,7 +463,7 @@ $('#dGerar').onclick = async () => {
     if (r.status === 'enviado') {
       msg($('#dMsg'), '');
       sucesso(`O PDF (${n} página(s)) foi salvo no servidor.`,
-        () => compartilhar(pdf, 'documento-jotalle.pdf', 'application/pdf', 'Documento Jotalle'));
+        () => compartilhar(pdf, 'documento-jotalle.pdf', 'application/pdf', 'Documento Jotalle'), D.paginas[0] && D.paginas[0].thumb);
     } else {
       // não chegou ao servidor: mostra o motivo e oferece abrir/salvar no celular
       const a = $('#dAbrir'); a.href = URL.createObjectURL(pdf); a.download = `documento-${quando.getTime()}.pdf`; a.classList.remove('hidden');

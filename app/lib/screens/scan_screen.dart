@@ -117,7 +117,16 @@ class _ScanScreenState extends State<ScanScreen> {
           builder: (_) => AlertDialog(
             icon: const Icon(Icons.check_circle, size: 48, color: Colors.green),
             title: const Text('Enviado com sucesso!', textAlign: TextAlign.center),
-            content: Text('O PDF ($n página(s)) foi salvo no servidor.', textAlign: TextAlign.center),
+            content: SingleChildScrollView(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(File(paginas.first), height: 220, width: double.infinity, fit: BoxFit.contain),
+                ),
+                const SizedBox(height: 12),
+                Text('O PDF ($n página(s)) foi salvo no servidor.', textAlign: TextAlign.center),
+              ]),
+            ),
             actionsAlignment: MainAxisAlignment.center,
             actionsOverflowDirection: VerticalDirection.down,
             actions: [

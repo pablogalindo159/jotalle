@@ -66,14 +66,24 @@ class _PhotoScreenState extends State<PhotoScreen> {
   }
 
   /// Mostra o resultado do envio. Retorna true se o usuário pediu para enviar pelo WhatsApp.
-  Future<bool?> _mostrarResultado({required bool ok, required String titulo, required String texto, bool whatsapp = false}) {
+  Future<bool?> _mostrarResultado({required bool ok, required String titulo, required String texto, bool whatsapp = false, File? previa}) {
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         icon: Icon(ok ? Icons.check_circle : Icons.cloud_off, size: 48, color: ok ? Colors.green : Colors.orange),
         title: Text(titulo, textAlign: TextAlign.center),
-        content: Text(texto, textAlign: TextAlign.center),
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            if (previa != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(previa, height: 220, width: double.infinity, fit: BoxFit.contain),
+              ),
+            if (previa != null) const SizedBox(height: 12),
+            Text(texto, textAlign: TextAlign.center),
+          ]),
+        ),
         actionsAlignment: MainAxisAlignment.center,
         actionsOverflowDirection: VerticalDirection.down,
         actions: [
@@ -145,6 +155,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
           titulo: 'Enviado com sucesso!',
           texto: 'A foto foi salva no servidor.${_aviso != null ? '\n\n$_aviso' : ''}',
           whatsapp: true,
+          previa: copia,
         );
         if (zapOk == true) {
           await Share.shareXFiles([XFile(copia.path)],
@@ -167,6 +178,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
                   : 'Sem conexão com o servidor. Ela será enviada quando houver internet.') +
               (salvou ? '\n\nA foto foi salva na galeria do celular.' : '\n\nNão foi possível salvar na galeria.'),
           whatsapp: true,
+          previa: copia,
         );
         if (zap == true) {
           await Share.shareXFiles([XFile(arq.path)],

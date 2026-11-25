@@ -13,6 +13,16 @@
 <link rel="icon" href="/pwa/icon-192.png">
 <link rel="stylesheet" href="/pwa/style.css">
 <title>Jotalle</title>
+<style>
+.modal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal.hidden{display:none}
+.modal .caixa{background:#14325f;border-radius:20px;padding:20px;width:100%;max-width:340px;max-height:92vh;overflow:auto;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);color:#fff}
+.modal .ok-ic{width:48px;height:48px;line-height:48px;margin:0 auto 6px;border-radius:50%;background:#3b9a5a;font-size:28px}
+.modal h2{margin:4px 0 6px;font-size:21px;color:#fff}
+.modal p{margin:0 0 10px;color:rgba(255,255,255,.85);font-size:14px;white-space:pre-line}
+.modal .previa{display:block;width:100%;max-height:38vh;object-fit:contain;border-radius:10px;background:#000;margin:0 0 10px}
+.modal .btn{margin-top:8px}
+</style>
 </head>
 <body>
 
@@ -74,6 +84,7 @@
   <div class="caixa">
     <div class="ok-ic">✓</div>
     <h2>Enviado com sucesso!</h2>
+    <img id="modalImg" class="previa hidden" alt="">
     <p id="modalTxt"></p>
     <button class="btn" id="modalZap" style="background:#25D366">Enviar pelo WhatsApp</button>
     <button class="btn sec" id="modalFechar">Fechar</button>
