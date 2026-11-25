@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#061a38">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jotalle">
+<link rel="manifest" href="/pwa/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
+<link rel="icon" href="/pwa/icon-192.png">
+<link rel="stylesheet" href="/pwa/style.css">
+<title>Jotalle</title>
+</head>
+<body>
+
+<!-- INÍCIO -->
+<section id="home" class="view">
+  <img class="logo" src="/img/logo.png" alt="Jotalle Transportes">
+  <button class="grande b-foto" id="goFoto"><span class="ic">📷</span>FOTO</button>
+  <button class="grande b-doc" id="goDoc"><span class="ic">📄</span>DIGITALIZAR<br>DOCUMENTO</button>
+  <div class="pend hidden" id="pend"></div>
+  <a class="cfg" id="goCfg">Configurações</a>
+</section>
+
+<!-- FOTO -->
+<section id="foto" class="view hidden">
+  <div class="topo"><button data-voltar>‹ Voltar</button></div>
+  <h1>Foto</h1>
+  <label class="l" for="placa">Placa do caminhão</label>
+  <input id="placa" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="ABC1D23">
+  <label class="l" for="carreta">Placa da carreta (opcional)</label>
+  <input id="carreta" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="XYZ9K87">
+
+  <div class="slots">
+    <div class="slot" id="slotP">📷<br>Foto principal<button class="x hidden" id="xP">✕</button></div>
+    <div class="slot" id="slotE">+ Foto extra<br>(opcional)<button class="x hidden" id="xE">✕</button></div>
+  </div>
+  <input type="file" id="inP" accept="image/*" capture="environment" hidden>
+  <input type="file" id="inE" accept="image/*" capture="environment" hidden>
+
+  <div class="msg hidden" id="fMsg"></div>
+  <button class="btn" id="fGerar" disabled>Gerar e enviar</button>
+  <img class="prev hidden" id="fPrev" alt="">
+  <button class="btn sec hidden" id="fSalvar">Salvar no iPhone</button>
+</section>
+
+<!-- DOCUMENTO -->
+<section id="doc" class="view hidden">
+  <div class="topo"><button data-voltar>‹ Voltar</button></div>
+  <h1>Digitalizar documento</h1>
+  <label class="l" for="dPlaca">Placa do caminhão (opcional)</label>
+  <input id="dPlaca" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="ABC1D23">
+  <label class="chk"><input type="checkbox" id="dPb" checked> Modo documento (preto e branco, mais nítido)</label>
+  <input type="file" id="inD" accept="image/*" capture="environment" hidden>
+  <button class="btn sec" id="dAdd">📷 Fotografar página</button>
+  <div class="pags" id="dPags"></div>
+  <div class="msg hidden" id="dMsg"></div>
+  <button class="btn" id="dGerar" disabled>Gerar PDF e enviar</button>
+  <a class="btn sec hidden" id="dAbrir" style="display:block;text-align:center;text-decoration:none" target="_blank">Abrir / baixar PDF</a>
+  <button class="btn sec hidden" id="dComp">Compartilhar / salvar em Arquivos</button>
+</section>
+
+<!-- CONFIG -->
+<section id="cfg" class="view hidden">
+  <div class="topo"><button data-voltar>‹ Voltar</button></div>
+  <h1>Configurações</h1>
+  <label class="l" for="apiKey">Chave da API (só se o servidor exigir)</label>
+  <input id="apiKey" class="n" type="password" autocomplete="off">
+  <button class="btn" id="cfgSalvar">Salvar</button>
+  <div class="msg" style="margin-top:22px">Para instalar: toque em <b>Compartilhar</b> no Safari e escolha <b>Adicionar à Tela de Início</b>.</div>
+</section>
+
+<script src="/pwa/app.js"></script>
+</body>
+</html>

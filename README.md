@@ -26,6 +26,9 @@ flutter run              # ou: flutter build apk --release
 ```
 URL padrão do servidor: `https://jotalle.infosaojose.com.br` (muda em Configurações do app).
 
+## App web (iPhone/Android pelo navegador)
+Abra `https://jotalle.infosaojose.com.br/app/` no Safari → Compartilhar → *Adicionar à Tela de Início*. Mesmas funções do app (foto carimbada, PDF de documento, fila offline); código em `backend/public/pwa/`.
+
 ## Como funciona
 - **FOTO**: digita placa e carreta → foto principal → (opcional) foto extra → gera JPG com PLACA/CARRETA, dia da semana, data e hora, rua/bairro/cidade/estado e coordenadas (S/W). PIP no topo: esquerda = print do mapa (OpenStreetMap; Google opcional), direita = foto extra.
 - **DIGITALIZAR**: scanner com recorte de bordas → PDF → abre no aparelho e vai ao servidor.
