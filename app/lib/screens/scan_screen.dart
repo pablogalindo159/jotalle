@@ -111,6 +111,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
       if (st == EnvioStatus.enviado) {
         if (!mounted) return;
+        final primeira = paginas.first; // fora do builder (a variável é anulável dentro de closures)
         final zap = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
@@ -121,7 +122,7 @@ class _ScanScreenState extends State<ScanScreen> {
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(File(paginas.first), height: 220, width: double.infinity, fit: BoxFit.contain),
+                  child: Image.file(File(primeira), height: 220, width: double.infinity, fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 12),
                 Text('O PDF ($n página(s)) foi salvo no servidor.', textAlign: TextAlign.center),
