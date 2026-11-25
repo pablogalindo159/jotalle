@@ -3,6 +3,7 @@ import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:uuid/uuid.dart';
@@ -134,6 +135,16 @@ class _ScanScreenState extends State<ScanScreen> {
                   icon: const Icon(Icons.picture_as_pdf),
                   label: const Text('Abrir / baixar PDF'),
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                ),
+              ),
+            if (_pdf != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: FilledButton.icon(
+                  onPressed: () => Share.shareXFiles([XFile(_pdf!.path)], text: 'Documento Jotalle'),
+                  icon: const Icon(Icons.send),
+                  label: const Text('Enviar pelo WhatsApp'),
+                  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50), backgroundColor: const Color(0xFF25D366)),
                 ),
               ),
           ]),

@@ -274,14 +274,14 @@ function metaBase(tipo, motorista, placa, carreta, quando, local) {
   };
 }
 
-async function compartilhar(blob, nome, tipoMime) {
+async function compartilhar(blob, nome, tipoMime, texto) {
   const f = new File([blob], nome, { type: tipoMime });
-  if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f] }); return true; }
+  if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], text: texto || '' }); return true; }
   return false;
 }
 
 /* ---------- FOTO ---------- */
-const F = { principal: null, extra: null, quando: null, fixP: null, resultado: null };
+const F = { principal: null, extra: null, quando: null, fixP: null, resultado: null, resumo: '' };
 
 function atualizaSlot(slot, x, file) {
   slot.classList.toggle('tem', !!file);
@@ -331,14 +331,15 @@ $('#fGerar').onclick = async () => {
     msg($('#fMsg'), '<span class="spin"></span>Enviando ao sistema…');
     const r = await enfileirar(meta, blob, `${meta.device_uuid}.jpg`);
     F.resultado = r.status === 'enviado' ? null : blob;
+    F.resumo = `Jotalle\nMotorista: ${motorista}\nPlaca cavalo: ${pl.p}\nPlaca carreta: ${pl.c}`;
     if (r.status === 'enviado') {
       msg($('#fMsg'), '<b>✓ Enviado com sucesso!</b><br>A foto foi salva no servidor.' + (aviso ? '<br>' + aviso : ''), 'ok');
     } else {
       // não chegou ao servidor: mostra o motivo e oferece salvar no celular
       $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
       msg($('#fMsg'), r.status === 'rejeitado'
-        ? `<b>Não foi enviado.</b><br>O servidor recusou: ${r.motivo}. Salve no iPhone.`
-        : '<b>Não foi enviado.</b><br>Sem conexão com o servidor. A foto ficou na fila e será enviada quando houver internet. Se quiser, salve no iPhone.', 'erro');
+        ? `<b>Não foi enviado.</b><br>O servidor recusou: ${r.motivo}. Envie pelo WhatsApp ou salve a foto.`
+        : '<b>Não foi enviado.</b><br>Sem conexão com o servidor. A foto ficou na fila e será enviada quando houver internet. Se quiser, envie pelo WhatsApp (ou escolha "Salvar imagem" na lista).', 'erro');
     }
     F.principal = F.extra = null;
     atualizaSlot($('#slotP'), $('#xP'), null); atualizaSlot($('#slotE'), $('#xE'), null);
@@ -349,7 +350,7 @@ $('#fGerar').onclick = async () => {
 };
 $('#fSalvar').onclick = async () => {
   if (!F.resultado) return;
-  try { if (!await compartilhar(F.resultado, 'foto-jotalle.jpg', 'image/jpeg')) msg($('#fMsg'), 'Segure o dedo sobre a imagem e escolha "Adicionar às Fotos".'); }
+  try { if (!await compartilhar(F.resultado, 'foto-jotalle.jpg', 'image/jpeg', F.resumo)) msg($('#fMsg'), 'Segure o dedo sobre a imagem e escolha "Adicionar às Fotos".'); }
   catch (e) { /* cancelado */ }
 };
 
@@ -448,8 +449,8 @@ $('#dGerar').onclick = async () => {
       const a = $('#dAbrir'); a.href = URL.createObjectURL(pdf); a.download = `documento-${quando.getTime()}.pdf`; a.classList.remove('hidden');
       $('#dComp').classList.remove('hidden');
       msg($('#dMsg'), r.status === 'rejeitado'
-        ? `<b>Não foi enviado.</b><br>O servidor recusou: ${r.motivo}. Salve o PDF no iPhone.`
-        : `<b>Não foi enviado.</b><br>Sem conexão com o servidor. O PDF (${n} página(s)) ficou na fila e será enviado quando houver internet. Se quiser, salve no iPhone.`, 'erro');
+        ? `<b>Não foi enviado.</b><br>O servidor recusou: ${r.motivo}. Envie o PDF pelo WhatsApp ou salve.`
+        : `<b>Não foi enviado.</b><br>Sem conexão com o servidor. O PDF (${n} página(s)) ficou na fila e será enviado quando houver internet. Se quiser, envie pelo WhatsApp ou salve.`, 'erro');
     }
     D.paginas = []; renderPags(); btn.disabled = true;
   } catch (e) {
@@ -458,7 +459,7 @@ $('#dGerar').onclick = async () => {
 };
 $('#dComp').onclick = async () => {
   if (!D.pdf) return;
-  try { if (!await compartilhar(D.pdf, 'documento-jotalle.pdf', 'application/pdf')) msg($('#dMsg'), 'Use "Abrir / baixar PDF".'); } catch (e) { /* cancelado */ }
+  try { if (!await compartilhar(D.pdf, 'documento-jotalle.pdf', 'application/pdf', 'Documento Jotalle')) msg($('#dMsg'), 'Use "Abrir / baixar PDF".'); } catch (e) { /* cancelado */ }
 };
 
 /* ---------- início ---------- */

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 import '../services/location_service.dart';
 import '../services/map_service.dart';
@@ -58,8 +59,8 @@ class _PhotoScreenState extends State<PhotoScreen> {
     if (f != null) setState(() => _extra = f);
   }
 
-  /// Mostra o resultado do envio. Retorna true se o usuário pediu para salvar no celular.
-  Future<bool?> _mostrarResultado({required bool ok, required String titulo, required String texto, bool salvarNoCelular = false}) {
+  /// Mostra o resultado do envio. Retorna true se o usuário pediu para enviar pelo WhatsApp.
+  Future<bool?> _mostrarResultado({required bool ok, required String titulo, required String texto, bool whatsapp = false}) {
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -68,12 +69,16 @@ class _PhotoScreenState extends State<PhotoScreen> {
         title: Text(titulo, textAlign: TextAlign.center),
         content: Text(texto, textAlign: TextAlign.center),
         actionsAlignment: MainAxisAlignment.center,
+        actionsOverflowDirection: VerticalDirection.down,
         actions: [
-          if (salvarNoCelular) TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Agora não')),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, salvarNoCelular ? true : null),
-            child: Text(salvarNoCelular ? 'Salvar no celular' : 'OK'),
-          ),
+          if (whatsapp)
+            FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.send),
+              label: const Text('Enviar pelo WhatsApp'),
+            ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('OK')),
         ],
       ),
     );
@@ -133,22 +138,26 @@ class _PhotoScreenState extends State<PhotoScreen> {
           texto: 'A foto foi salva no servidor.${_aviso != null ? '\n\n$_aviso' : ''}',
         );
       } else {
-        // Não foi para o servidor: mostra o motivo e oferece salvar no celular.
-        final salvar = await _mostrarResultado(
+        // Não foi para o servidor: salva sozinho na galeria e oferece enviar pelo WhatsApp.
+        var salvou = true;
+        try {
+          await Gal.putImage(arq.path, album: 'Jotalle');
+        } catch (_) {
+          salvou = false;
+        }
+        if (!mounted) return;
+        final zap = await _mostrarResultado(
           ok: false,
           titulo: 'Não foi enviado',
-          texto: st == EnvioStatus.rejeitado
-              ? 'O servidor recusou a foto: ${widget.fila.rejeitados[id]}.'
-              : 'Sem conexão com o servidor. A foto ficou na fila e será enviada quando houver internet.',
-          salvarNoCelular: true,
+          texto: (st == EnvioStatus.rejeitado
+                  ? 'O servidor recusou a foto: ${widget.fila.rejeitados[id]}.'
+                  : 'Sem conexão com o servidor. Ela será enviada quando houver internet.') +
+              (salvou ? '\n\nA foto foi salva na galeria do celular.' : '\n\nNão foi possível salvar na galeria.'),
+          whatsapp: true,
         );
-        if (salvar == true) {
-          try {
-            await Gal.putImage(arq.path, album: 'Jotalle');
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto salva no celular.')));
-          } catch (e) {
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível salvar: $e')));
-          }
+        if (zap == true) {
+          await Share.shareXFiles([XFile(arq.path)],
+              text: 'Jotalle\nMotorista: $motorista\nPlaca cavalo: $placa\nPlaca carreta: $carreta');
         }
       }
       if (!mounted) return;
