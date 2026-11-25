@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/settings.dart';
 import '../services/upload_queue.dart';
 import 'photo_screen.dart';
@@ -15,6 +17,20 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _enviando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pedirPermissoes();
+  }
+
+  // pede tudo logo na abertura: câmera, localização e galeria
+  Future<void> _pedirPermissoes() async {
+    try {
+      await [Permission.camera, Permission.locationWhenInUse].request();
+      if (!await Gal.hasAccess()) await Gal.requestAccess();
+    } catch (_) {}
+  }
 
   Future<void> _abrir(Widget tela) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => tela));
