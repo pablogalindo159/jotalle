@@ -78,7 +78,7 @@ class _ScanScreenState extends State<ScanScreen> {
         'latitude': local?.lat,
         'longitude': local?.lng,
       }, arq.path));
-      await widget.fila.enviarTudo();
+      await widget.fila.enviarTudo().timeout(const Duration(seconds: 90), onTimeout: () => 0);
       final st = widget.fila.status(id);
       final n = paginas.length;
 
@@ -93,7 +93,7 @@ class _ScanScreenState extends State<ScanScreen> {
         var salvou = true;
         for (final p in paginas) {
           try {
-            await Gal.putImage(p, album: 'Jotalle');
+            await Gal.putImage(p, album: 'Jotalle').timeout(const Duration(seconds: 15));
           } catch (_) {
             salvou = false;
           }

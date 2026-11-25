@@ -94,7 +94,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
 
       LocalFix? local;
       try {
-        local = await _fix;
+        local = await _fix!.timeout(const Duration(seconds: 40));
       } catch (e) {
         _aviso = '$e (a foto sai sem localização)';
       }
@@ -127,7 +127,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
         'latitude': local?.lat,
         'longitude': local?.lng,
       }, arq.path));
-      await widget.fila.enviarTudo();
+      await widget.fila.enviarTudo().timeout(const Duration(seconds: 90), onTimeout: () => 0);
       final st = widget.fila.status(id);
 
       if (!mounted) return;
@@ -141,7 +141,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
         // Não foi para o servidor: salva sozinho na galeria e oferece enviar pelo WhatsApp.
         var salvou = true;
         try {
-          await Gal.putImage(arq.path, album: 'Jotalle');
+          await Gal.putImage(arq.path, album: 'Jotalle').timeout(const Duration(seconds: 15));
         } catch (_) {
           salvou = false;
         }

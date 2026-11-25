@@ -49,8 +49,10 @@ class UploadQueue {
   /// Tenta enviar tudo. Retorna quantos foram enviados.
   Future<int> enviarTudo() async {
     // se já há um envio em andamento, espera ele terminar
-    while (_enviando) {
+    var espera = 0;
+    while (_enviando && espera < 300) { // no máx. ~60 s esperando outro envio
       await Future.delayed(const Duration(milliseconds: 200));
+      espera++;
     }
     _enviando = true;
     var ok = 0;
@@ -93,7 +95,8 @@ class UploadQueue {
         if (v != null && '$v'.isNotEmpty) req.fields[k] = '$v';
       });
       req.files.add(await http.MultipartFile.fromPath('arquivo', i.path));
-      final res = await http.Response.fromStream(await req.send().timeout(const Duration(minutes: 2)));
+      final res = await (() async => http.Response.fromStream(await req.send()))()
+          .timeout(const Duration(seconds: 60));
       if (res.statusCode == 200 || res.statusCode == 201) return (estado: 1, msg: '');
       if (res.statusCode == 422) {
         String m = 'dados inválidos';

@@ -37,9 +37,16 @@ class LocationService {
     if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
       throw 'Sem permissão de localização.';
     }
-    final pos = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.best, timeLimit: Duration(seconds: 20)),
-    );
+    Position pos;
+    try {
+      pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 15)),
+      ).timeout(const Duration(seconds: 20));
+    } catch (_) {
+      final ultima = await Geolocator.getLastKnownPosition();
+      if (ultima == null) throw 'Não consegui pegar o GPS. Vá para um local aberto.';
+      pos = ultima;
+    }
     final end = await _endereco(pos.latitude, pos.longitude);
     return LocalFix(pos.latitude, pos.longitude, end);
   }
@@ -70,7 +77,7 @@ class LocationService {
         'format': 'jsonv2', 'lat': '$lat', 'lon': '$lng', 'addressdetails': '1', 'zoom': '18', 'accept-language': 'pt-BR',
       }),
       headers: {'User-Agent': kUserAgent},
-    );
+    ).timeout(const Duration(seconds: 8));
     if (r.statusCode != 200) return null;
     final a = (jsonDecode(r.body)['address'] ?? {}) as Map<String, dynamic>;
     String s(List<String> ks) => ks.map((k) => a[k]).whereType<String>().firstWhere((_) => true, orElse: () => '');
@@ -90,7 +97,7 @@ class LocationService {
     if (key.isEmpty) return null;
     final r = await http.get(Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
       'latlng': '$lat,$lng', 'language': 'pt-BR', 'key': key,
-    }));
+    })).timeout(const Duration(seconds: 8));
     if (r.statusCode != 200) return null;
     final res = (jsonDecode(r.body)['results'] as List?) ?? [];
     if (res.isEmpty) return null;
