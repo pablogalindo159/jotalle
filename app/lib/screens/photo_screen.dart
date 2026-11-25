@@ -22,9 +22,10 @@ class PhotoScreen extends StatefulWidget {
 
 class _PhotoScreenState extends State<PhotoScreen> {
   final _form = GlobalKey<FormState>();
-  late final _motorista = TextEditingController(text: widget.settings.ultimoMotorista);
-  late final _placa = TextEditingController(text: widget.settings.ultimaPlaca);
-  late final _carreta = TextEditingController(text: widget.settings.ultimaCarreta);
+  // Campos sempre começam vazios: o motorista digita os 3 itens a cada foto.
+  final _motorista = TextEditingController();
+  final _placa = TextEditingController();
+  final _carreta = TextEditingController();
   final _picker = ImagePicker();
 
   File? _principal, _extra;
@@ -64,9 +65,6 @@ class _PhotoScreenState extends State<PhotoScreen> {
       final s = widget.settings;
       final motorista = _motorista.text.trim().toUpperCase();
       final placa = _limpa(_placa.text), carreta = _limpa(_carreta.text);
-      s.ultimoMotorista = motorista;
-      s.ultimaPlaca = placa;
-      s.ultimaCarreta = carreta;
 
       LocalFix? local;
       try {
@@ -156,11 +154,8 @@ class _PhotoScreenState extends State<PhotoScreen> {
                   textCapitalization: TextCapitalization.characters,
                   inputFormatters: [LengthLimitingTextInputFormatter(8)],
                   decoration: const InputDecoration(
-                      labelText: 'Placa da carreta (opcional)', border: OutlineInputBorder()),
-                  validator: (v) {
-                    final t = _limpa(v ?? '');
-                    return t.isEmpty || t.length == 7 ? null : 'Placa com 7 caracteres';
-                  },
+                      labelText: 'Placa da carreta', border: OutlineInputBorder()),
+                  validator: (v) => _limpa(v ?? '').length == 7 ? null : 'Placa com 7 caracteres',
                 ),
               ]),
             ),

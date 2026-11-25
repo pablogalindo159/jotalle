@@ -15,9 +15,9 @@ class RegistroApiController extends Controller
         $d = $request->validate([
             'device_uuid' => 'required|uuid',
             'tipo' => 'required|in:foto,documento',
-            'motorista' => 'nullable|string|max:120',
+            'motorista' => 'nullable|string|max:120|required_if:tipo,foto',
             'placa_cavalo' => 'nullable|string|max:10|required_if:tipo,foto',
-            'placa_carreta' => 'nullable|string|max:10',
+            'placa_carreta' => 'nullable|string|max:10|required_if:tipo,foto',
             'tirado_em' => 'required|date',
             'rua' => 'nullable|string|max:255',
             'bairro' => 'nullable|string|max:255',

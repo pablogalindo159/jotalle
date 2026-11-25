@@ -10,10 +10,16 @@ const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quint
 const views = ['home', 'foto', 'doc', 'cfg'];
 function ir(id) { views.forEach(v => $('#' + v).classList.toggle('hidden', v !== id)); window.scrollTo(0, 0); }
 document.querySelectorAll('[data-voltar]').forEach(b => b.onclick = () => ir('home'));
-$('#goFoto').onclick = () => { $('#motorista').value = localStorage.getItem('motorista') || ''; $('#placa').value = localStorage.getItem('placa') || ''; $('#carreta').value = localStorage.getItem('carreta') || ''; ir('foto'); };
+$('#goFoto').onclick = () => { limpaFormFoto(); ir('foto'); };
 $('#goDoc').onclick = () => ir('doc');
 $('#goCfg').onclick = () => { $('#apiKey').value = localStorage.getItem('apiKey') || ''; $('#gKey').value = localStorage.getItem('googleKey') || ''; ir('cfg'); };
 $('#cfgSalvar').onclick = () => { localStorage.setItem('apiKey', $('#apiKey').value.trim()); localStorage.setItem('googleKey', $('#gKey').value.trim()); ir('home'); };
+
+/** Os 3 campos começam sempre vazios (nada é lembrado entre fotos). */
+function limpaFormFoto() {
+  ['#motorista', '#placa', '#carreta'].forEach(i => { $(i).value = ''; });
+  msg($('#fMsg'), '');
+}
 
 function msg(el, texto, tipo) {
   el.className = 'msg' + (tipo ? ' ' + tipo : '');
@@ -283,7 +289,7 @@ function validaPlacas() {
   if ($('#motorista').value.trim().length < 3) { msg($('#fMsg'), 'Informe o nome do motorista.', 'erro'); return null; }
   const p = limpaPlaca($('#placa').value), c = limpaPlaca($('#carreta').value);
   if (p.length !== 7) { msg($('#fMsg'), 'A placa do caminhão precisa ter 7 caracteres.', 'erro'); return null; }
-  if (c && c.length !== 7) { msg($('#fMsg'), 'A placa da carreta precisa ter 7 caracteres (ou deixe em branco).', 'erro'); return null; }
+  if (c.length !== 7) { msg($('#fMsg'), 'A placa da carreta precisa ter 7 caracteres.', 'erro'); return null; }
   return { p, c };
 }
 
@@ -308,8 +314,6 @@ $('#xE').onclick = e => { e.stopPropagation(); F.extra = null; atualizaSlot($('#
 $('#fGerar').onclick = async () => {
   const pl = validaPlacas(); if (!pl || !F.principal) return;
   const motorista = $('#motorista').value.trim().toUpperCase();
-  localStorage.setItem('motorista', motorista);
-  localStorage.setItem('placa', pl.p); localStorage.setItem('carreta', pl.c);
   const btn = $('#fGerar'); btn.disabled = true;
   msg($('#fMsg'), '<span class="spin"></span>Gerando a foto…');
   $('#fPrev').classList.add('hidden'); $('#fSalvar').classList.add('hidden');
