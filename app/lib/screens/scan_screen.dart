@@ -109,7 +109,19 @@ class _ScanScreenState extends State<ScanScreen> {
       final n = paginas.length;
 
       if (st == EnvioStatus.enviado) {
-        setState(() => _msg = 'Enviado com sucesso! PDF ($n página(s)) salvo no servidor ✓');
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AlertDialog(
+            icon: const Icon(Icons.check_circle, size: 48, color: Colors.green),
+            title: const Text('Enviado com sucesso!', textAlign: TextAlign.center),
+            content: Text('O PDF ($n página(s)) foi salvo no servidor.', textAlign: TextAlign.center),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+          ),
+        );
+        if (mounted) Navigator.pop(context); // volta para a tela inicial
       } else {
         // Não foi para o servidor: guarda uma cópia para abrir/salvar no celular.
         final dl = File('${(await getApplicationDocumentsDirectory()).path}/documento_${agora.millisecondsSinceEpoch}.pdf');
