@@ -42,7 +42,23 @@ class _JotalleAppState extends State<JotalleApp> {
   Widget build(BuildContext context) => MaterialApp(
         title: 'Jotalle',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorSchemeSeed: const Color(0xFF0B5CFF), useMaterial3: true),
+        theme: ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          colorSchemeSeed: const Color(0xFF3D8BD4),
+          scaffoldBackgroundColor: const Color(0xFF061A38),
+          appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF061A38), elevation: 0, centerTitle: true),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.black.withOpacity(.3),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          ),
+        ),
         home: HomeScreen(settings: widget.settings, fila: widget.fila),
       );
 }

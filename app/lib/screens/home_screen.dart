@@ -35,19 +35,24 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final pend = widget.fila.pendentes().length;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Jotalle'),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Expanded(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0A2A55), Color(0xFF061A38)]),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              children: [
+                Image.asset('assets/logo.png', width: 200),
+                const SizedBox(height: 22),
+                Expanded(
                 child: _Botao(
                   icone: Icons.photo_camera,
                   texto: 'FOTO',
-                  cor: const Color(0xFF0B5CFF),
+                  cor: const Color(0xFF3D8BD4),
+                  cor2: const Color(0xFF2F74B8),
                   onTap: () => _abrir(PhotoScreen(settings: widget.settings, fila: widget.fila)),
                 ),
               ),
@@ -56,7 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: _Botao(
                   icone: Icons.document_scanner,
                   texto: 'DIGITALIZAR\nDOCUMENTO',
-                  cor: const Color(0xFF2E7D32),
+                  cor: const Color(0xFF3B9A5A),
+                  cor2: const Color(0xFF2E7D46),
                   onTap: () => _abrir(ScanScreen(settings: widget.settings, fila: widget.fila)),
                 ),
               ),
@@ -73,22 +79,30 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
 }
 
 class _Botao extends StatelessWidget {
-  const _Botao({required this.icone, required this.texto, required this.cor, required this.onTap});
+  const _Botao({required this.icone, required this.texto, required this.cor, required this.cor2, required this.onTap});
   final IconData icone;
   final String texto;
   final Color cor;
+  final Color cor2;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: cor,
-        borderRadius: BorderRadius.circular(24),
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [cor, cor2]),
+          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 24, offset: Offset(0, 10))],
+        ),
+        child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(22),
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: onTap,
@@ -104,6 +118,7 @@ class _Botao extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
       );
 }
