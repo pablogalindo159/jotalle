@@ -242,19 +242,19 @@ async function carimbar({ principal, extra, mapa, motorista, placa, carreta, qua
     g.font = `${bold ? '800' : '500'} ${tam}px ${fam}`;
     quebra(g, txt, w - 2 * m, maxL).forEach(l => linhas.push({ l, tam, bold }));
   };
-  add(`MOTORISTA: ${motorista}`, 50 * s, true);
-  add(`PLACA CAVALO: ${placa}`, 50 * s, true);
-  add(`PLACA CARRETA: ${carreta || '-'}`, 50 * s, true);
-  add(`${DIAS[quando.getDay()]}, ${pad(quando.getDate())}/${pad(quando.getMonth() + 1)}/${quando.getFullYear()} ${pad(quando.getHours())}:${pad(quando.getMinutes())}:${pad(quando.getSeconds())}`, 36 * s, false);
-  add(local && linhaEnd(local.end) ? linhaEnd(local.end) : 'Endereço indisponível', 34 * s, false, 2);
-  add(local ? `${dms(local.lat, 'N', 'S')}  ${dms(local.lng, 'E', 'W')}` : 'Coordenadas indisponíveis', 34 * s, false);
+  add(`MOTORISTA: ${motorista}`, 36 * s, true);
+  add(`PLACA CAVALO: ${placa}`, 36 * s, true);
+  add(`PLACA CARRETA: ${carreta || '-'}`, 36 * s, true);
+  add(`${DIAS[quando.getDay()]}, ${pad(quando.getDate())}/${pad(quando.getMonth() + 1)}/${quando.getFullYear()} ${pad(quando.getHours())}:${pad(quando.getMinutes())}:${pad(quando.getSeconds())}`, 27 * s, false);
+  add(local && linhaEnd(local.end) ? linhaEnd(local.end) : 'Endereço indisponível', 25 * s, false, 2);
+  add(local ? `${dms(local.lat, 'N', 'S')}  ${dms(local.lng, 'E', 'W')}` : 'Coordenadas indisponíveis', 25 * s, false);
 
-  const gap = 8 * s;
+  const gap = 4 * s;
   const alt = linhas.reduce((a, l) => a + l.tam * 1.15, 0) + gap * (linhas.length - 1);
-  const faixa = alt + 2 * m * 0.8;
+  const faixa = alt + 2 * m * 0.5;
   g.fillStyle = 'rgba(0,0,0,.7)'; g.fillRect(0, h - faixa, w, faixa);
   g.fillStyle = '#fff'; g.textBaseline = 'top';
-  let y = h - faixa + m * 0.8;
+  let y = h - faixa + m * 0.5;
   for (const l of linhas) {
     g.font = `${l.bold ? '800' : '500'} ${l.tam}px ${fam}`;
     g.fillText(l.l, m, y);

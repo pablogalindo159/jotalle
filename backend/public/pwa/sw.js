@@ -1,5 +1,5 @@
 // Service worker do app web Jotalle (escopo /app/): deixa o app abrir sem internet.
-const CACHE = 'jotalle-v6';
+const CACHE = 'jotalle-v7';
 const ARQUIVOS = ['/app/', '/pwa/app.js', '/pwa/style.css', '/pwa/manifest.webmanifest', '/img/logo.png',
   '/pwa/icon-192.png', '/pwa/apple-touch-icon.png'];
 

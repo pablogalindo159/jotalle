@@ -63,20 +63,20 @@ class StampService {
     // Faixa de texto (rodapé)
     final l = dados.local;
     final linhas = <TextPainter>[
-      _tp('MOTORISTA: ${dados.motorista}', 50 * s, bold: true, maxW: w - 2 * margem),
-      _tp('PLACA CAVALO: ${dados.placa}', 50 * s, bold: true, maxW: w - 2 * margem),
-      _tp('PLACA CARRETA: ${dados.carreta.isEmpty ? '-' : dados.carreta}', 50 * s, bold: true, maxW: w - 2 * margem),
-      _tp(diaDataHora(dados.quando), 36 * s, maxW: w - 2 * margem),
-      _tp(l == null || l.endereco.vazio ? 'Endereço indisponível' : l.endereco.linha, 34 * s, maxW: w - 2 * margem),
-      _tp(l == null ? 'Coordenadas indisponíveis' : coordenadas(l.lat, l.lng), 34 * s, maxW: w - 2 * margem),
+      _tp('MOTORISTA: ${dados.motorista}', 36 * s, bold: true, maxW: w - 2 * margem),
+      _tp('PLACA CAVALO: ${dados.placa}', 36 * s, bold: true, maxW: w - 2 * margem),
+      _tp('PLACA CARRETA: ${dados.carreta.isEmpty ? '-' : dados.carreta}', 36 * s, bold: true, maxW: w - 2 * margem),
+      _tp(diaDataHora(dados.quando), 27 * s, maxW: w - 2 * margem),
+      _tp(l == null || l.endereco.vazio ? 'Endereço indisponível' : l.endereco.linha, 25 * s, maxW: w - 2 * margem),
+      _tp(l == null ? 'Coordenadas indisponíveis' : coordenadas(l.lat, l.lng), 25 * s, maxW: w - 2 * margem),
     ];
-    final altTexto = linhas.fold<double>(0, (a, t) => a + t.height) + 6 * s * (linhas.length - 1);
-    final faixa = altTexto + 2 * margem * 0.8;
+    final altTexto = linhas.fold<double>(0, (a, t) => a + t.height) + 4 * s * (linhas.length - 1);
+    final faixa = altTexto + 2 * margem * 0.5;
     c.drawRect(ui.Rect.fromLTWH(0, h - faixa, w, faixa), ui.Paint()..color = const ui.Color(0xB3000000));
-    var y = h - faixa + margem * 0.8;
+    var y = h - faixa + margem * 0.5;
     for (final t in linhas) {
       t.paint(c, ui.Offset(margem, y));
-      y += t.height + 6 * s;
+      y += t.height + 4 * s;
     }
 
     final out = await rec.endRecording().toImage(base.width, base.height);
