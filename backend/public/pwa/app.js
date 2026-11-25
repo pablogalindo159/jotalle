@@ -281,6 +281,15 @@ async function compartilhar(blob, nome, tipoMime, texto) {
   return false;
 }
 
+/** Aviso de sucesso com WhatsApp e Fechar; ao tocar em qualquer um volta para o início. */
+function sucesso(texto, compartilha) {
+  $('#modalTxt').textContent = texto;
+  $('#modal').classList.remove('hidden');
+  const fim = () => { $('#modal').classList.add('hidden'); ir('home'); };
+  $('#modalFechar').onclick = fim;
+  $('#modalZap').onclick = async () => { try { await compartilha(); } catch (e) { /* cancelado */ } fim(); };
+}
+
 /* ---------- FOTO ---------- */
 const F = { principal: null, extra: null, extraEsq: null, quando: null, fixP: null, resultado: null, resumo: '' };
 
@@ -338,8 +347,9 @@ $('#fGerar').onclick = async () => {
     F.resultado = blob;
     F.resumo = `Jotalle\nMotorista: ${motorista}\nPlaca cavalo: ${pl.p}\nPlaca carreta: ${pl.c}`;
     if (r.status === 'enviado') {
-      msg($('#fMsg'), '<b>✓ Enviado com sucesso!</b><br>A foto foi salva no servidor.' + (aviso ? '<br>' + aviso : ''), 'ok');
-      $('#fSalvar').classList.remove('hidden');
+      msg($('#fMsg'), '');
+      sucesso('A foto foi salva no servidor.' + (aviso ? '\n' + aviso : ''),
+        () => compartilhar(blob, 'foto-jotalle.jpg', 'image/jpeg', F.resumo));
     } else {
       // não chegou ao servidor: mostra o motivo e oferece salvar no celular
       $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
@@ -449,8 +459,9 @@ $('#dGerar').onclick = async () => {
     const r = await enfileirar(meta, pdf, `${meta.device_uuid}.pdf`);
     D.pdf = pdf;
     if (r.status === 'enviado') {
-      msg($('#dMsg'), `<b>✓ Enviado com sucesso!</b><br>O PDF (${n} página(s)) foi salvo no servidor.`, 'ok');
-      $('#dComp').classList.remove('hidden');
+      msg($('#dMsg'), '');
+      sucesso(`O PDF (${n} página(s)) foi salvo no servidor.`,
+        () => compartilhar(pdf, 'documento-jotalle.pdf', 'application/pdf', 'Documento Jotalle'));
     } else {
       // não chegou ao servidor: mostra o motivo e oferece abrir/salvar no celular
       const a = $('#dAbrir'); a.href = URL.createObjectURL(pdf); a.download = `documento-${quando.getTime()}.pdf`; a.classList.remove('hidden');
