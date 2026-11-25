@@ -61,7 +61,7 @@
     <a class="btn sec" href="{{ route('painel') }}">Limpar</a>
   </form>
 
-  <p class="mut">{{ $registros->total() }} registro(s)</p>
+  <p class="mut">{{ $registros->total() }} registro(s) · mostrando os últimos {{ $exibirDias }} dias</p>
 
   <div class="grid">
     @forelse ($registros as $r)

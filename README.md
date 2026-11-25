@@ -26,6 +26,13 @@ flutter run              # ou: flutter build apk --release
 ```
 URL padrão do servidor: `https://jotalle.infosaojose.com.br` (muda em Configurações do app).
 
+## Retenção de dados
+O painel mostra só os **últimos 30 dias**; fotos/PDFs e registros com **mais de 35 dias são apagados** todo dia às 03:00 (`RETENCAO_EXIBIR_DIAS` / `RETENCAO_APAGAR_DIAS` no `.env`). Precisa do cron do Laravel na VPS:
+```bash
+(crontab -l 2>/dev/null; echo '* * * * * cd /var/www/jotalle/backend && php artisan schedule:run >> /dev/null 2>&1') | crontab -
+```
+Teste sem apagar: `php artisan registros:limpar --simular`.
+
 ## App web (iPhone/Android pelo navegador)
 Abra `https://jotalle.infosaojose.com.br/app/` no Safari → Compartilhar → *Adicionar à Tela de Início*. Mesmas funções do app (foto carimbada, PDF de documento, fila offline); código em `backend/public/pwa/`.
 

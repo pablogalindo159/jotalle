@@ -11,6 +11,8 @@ class PainelController extends Controller
     public function index(Request $request)
     {
         $q = Registro::query()->latest('tirado_em');
+        $desde = now()->subDays(config('jotalle.exibir_dias'))->startOfDay();
+        $q->where('tirado_em', '>=', $desde);
 
         if ($busca = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $request->query('placa')))) {
             $q->where(fn ($w) => $w->where('placa_cavalo', 'like', "%$busca%")
@@ -33,6 +35,7 @@ class PainelController extends Controller
         }
 
         return view('painel.index', [
+            'exibirDias' => config('jotalle.exibir_dias'),
             'registros' => $q->paginate(24)->withQueryString(),
         ]);
     }
