@@ -84,7 +84,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
               icon: const Icon(Icons.send),
               label: const Text('Enviar pelo WhatsApp'),
             ),
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('OK')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Fechar')),
         ],
       ),
     );
