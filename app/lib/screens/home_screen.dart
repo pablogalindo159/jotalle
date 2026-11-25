@@ -3,7 +3,6 @@ import '../services/settings.dart';
 import '../services/upload_queue.dart';
 import 'photo_screen.dart';
 import 'scan_screen.dart';
-import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.settings, required this.fila});
@@ -38,12 +37,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Jotalle'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => _abrir(SettingsScreen(settings: widget.settings)),
-          ),
-        ],
       ),
       body: SafeArea(
         child: Padding(

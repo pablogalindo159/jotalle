@@ -7,14 +7,11 @@ const limpaPlaca = s => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
 /* ---------- navegação ---------- */
-const views = ['home', 'foto', 'doc', 'cfg'];
+const views = ['home', 'foto', 'doc'];
 function ir(id) { views.forEach(v => $('#' + v).classList.toggle('hidden', v !== id)); window.scrollTo(0, 0); }
 document.querySelectorAll('[data-voltar]').forEach(b => b.onclick = () => ir('home'));
 $('#goFoto').onclick = () => { limpaFormFoto(); ir('foto'); };
 $('#goDoc').onclick = () => ir('doc');
-$('#goCfg').onclick = () => { $('#apiKey').value = localStorage.getItem('apiKey') || ''; $('#gKey').value = localStorage.getItem('googleKey') || ''; ir('cfg'); };
-$('#cfgSalvar').onclick = () => { localStorage.setItem('apiKey', $('#apiKey').value.trim()); localStorage.setItem('googleKey', $('#gKey').value.trim()); ir('home'); };
-
 /** Os 3 campos começam sempre vazios (nada é lembrado entre fotos). */
 function limpaFormFoto() {
   ['#motorista', '#placa', '#carreta'].forEach(i => { $(i).value = ''; });
@@ -40,14 +37,17 @@ const putItem = async i => req((await store('readwrite')).put(i));
 const allItems = async () => req((await store('readonly')).getAll());
 const delItem = async id => req((await store('readwrite')).delete(id));
 
-/** Guarda na fila, tenta enviar e devolve true se ficou pendente (sem internet / servidor fora). */
+/** Guarda na fila, tenta enviar e devolve { status: 'enviado' | 'pendente' | 'rejeitado', motivo }. */
 async function enfileirar(meta, blob, nome) {
   await putItem({ id: meta.device_uuid, meta, nome, mime: blob.type, buf: await blob.arrayBuffer() });
   renderPend();
   await flush();
-  return (await allItems()).some(i => i.id === meta.device_uuid);
+  if (rejeitados[meta.device_uuid]) return { status: 'rejeitado', motivo: rejeitados[meta.device_uuid] };
+  const pend = (await allItems()).some(i => i.id === meta.device_uuid);
+  return { status: pend ? 'pendente' : 'enviado', motivo: '' };
 }
 
+const rejeitados = {};   // id -> motivo (servidor recusou)
 let fluxo = null;
 function flush() {
   if (!navigator.onLine) return Promise.resolve(0);
@@ -63,7 +63,12 @@ function flush() {
       if (key) h['X-Api-Key'] = key;
       let r;
       try { r = await fetch('/api/registros', { method: 'POST', body: fd, headers: h }); } catch (e) { break; }
-      if (r.ok || r.status === 422) { await delItem(it.id); if (r.ok) ok++; } else break;
+      if (r.ok) { await delItem(it.id); ok++; }
+      else if (r.status === 422) {
+        let m = 'dados inválidos';
+        try { m = (await r.json()).message || m; } catch (e) { /* ignora */ }
+        rejeitados[it.id] = m; await delItem(it.id);   // não trava a fila; o arquivo continua na tela para salvar
+      } else break;
     }
     return ok;
   })().catch(() => 0).finally(() => { fluxo = null; renderPend(); });
@@ -324,14 +329,16 @@ $('#fGerar').onclick = async () => {
     const blob = await carimbar({ principal: F.principal, extra: F.extra, mapa, motorista, placa: pl.p, carreta: pl.c, quando: F.quando, local });
     const meta = metaBase('foto', motorista, pl.p, pl.c, F.quando, local);
     msg($('#fMsg'), '<span class="spin"></span>Enviando ao sistema…');
-    const pendente = await enfileirar(meta, blob, `${meta.device_uuid}.jpg`);
-    F.resultado = pendente ? blob : null;
-    if (pendente) {
-      // sem internet: foto fica na fila e dá para salvar no aparelho
-      $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
-      msg($('#fMsg'), 'Sem conexão: a foto ficou na fila e será enviada quando houver internet. Se quiser, salve no iPhone.' + (aviso ? '<br>' + aviso : ''));
+    const r = await enfileirar(meta, blob, `${meta.device_uuid}.jpg`);
+    F.resultado = r.status === 'enviado' ? null : blob;
+    if (r.status === 'enviado') {
+      msg($('#fMsg'), '<b>✓ Enviado com sucesso!</b><br>A foto foi salva no servidor.' + (aviso ? '<br>' + aviso : ''), 'ok');
     } else {
-      msg($('#fMsg'), 'Foto enviada ao sistema ✓' + (aviso ? '<br>' + aviso : ''), aviso ? '' : 'ok');
+      // não chegou ao servidor: mostra o motivo e oferece salvar no celular
+      $('#fPrev').src = URL.createObjectURL(blob); $('#fPrev').classList.remove('hidden'); $('#fSalvar').classList.remove('hidden');
+      msg($('#fMsg'), r.status === 'rejeitado'
+        ? `<b>Não foi enviado.</b><br>O servidor recusou: ${r.motivo}. Salve no iPhone.`
+        : '<b>Não foi enviado.</b><br>Sem conexão com o servidor. A foto ficou na fila e será enviada quando houver internet. Se quiser, salve no iPhone.', 'erro');
     }
     F.principal = F.extra = null;
     atualizaSlot($('#slotP'), $('#xP'), null); atualizaSlot($('#slotE'), $('#xE'), null);
@@ -432,15 +439,17 @@ $('#dGerar').onclick = async () => {
     const n = D.paginas.length;
     $('#dAbrir').classList.add('hidden'); $('#dComp').classList.add('hidden');
     msg($('#dMsg'), '<span class="spin"></span>Enviando ao sistema…');
-    const pendente = await enfileirar(meta, pdf, `${meta.device_uuid}.pdf`);
-    D.pdf = pendente ? pdf : null;
-    if (pendente) {
-      // sem internet: PDF fica na fila e dá para abrir/salvar no aparelho
+    const r = await enfileirar(meta, pdf, `${meta.device_uuid}.pdf`);
+    D.pdf = r.status === 'enviado' ? null : pdf;
+    if (r.status === 'enviado') {
+      msg($('#dMsg'), `<b>✓ Enviado com sucesso!</b><br>O PDF (${n} página(s)) foi salvo no servidor.`, 'ok');
+    } else {
+      // não chegou ao servidor: mostra o motivo e oferece abrir/salvar no celular
       const a = $('#dAbrir'); a.href = URL.createObjectURL(pdf); a.download = `documento-${quando.getTime()}.pdf`; a.classList.remove('hidden');
       $('#dComp').classList.remove('hidden');
-      msg($('#dMsg'), `Sem conexão: o PDF (${n} página(s)) ficou na fila e será enviado quando houver internet. Se quiser, salve no aparelho.`);
-    } else {
-      msg($('#dMsg'), `PDF com ${n} página(s) enviado ao sistema ✓`, 'ok');
+      msg($('#dMsg'), r.status === 'rejeitado'
+        ? `<b>Não foi enviado.</b><br>O servidor recusou: ${r.motivo}. Salve o PDF no iPhone.`
+        : `<b>Não foi enviado.</b><br>Sem conexão com o servidor. O PDF (${n} página(s)) ficou na fila e será enviado quando houver internet. Se quiser, salve no iPhone.`, 'erro');
     }
     D.paginas = []; renderPags(); btn.disabled = true;
   } catch (e) {

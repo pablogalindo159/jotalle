@@ -77,15 +77,21 @@ class _ScanScreenState extends State<ScanScreen> {
         'longitude': local?.lng,
       }, arq.path));
       await widget.fila.enviarTudo();
+      final st = widget.fila.status(id);
+      final n = paginas.length;
 
-      final pendente = widget.fila.pendentes().any((i) => i.meta['device_uuid'] == id);
-      if (pendente) {
-        // sem internet: guarda uma cópia para abrir/salvar (a da fila é apagada após o envio)
+      if (st == EnvioStatus.enviado) {
+        setState(() => _msg = 'Enviado com sucesso! PDF ($n página(s)) salvo no servidor ✓');
+      } else {
+        // Não foi para o servidor: guarda uma cópia para abrir/salvar no celular.
         final dl = File('${(await getApplicationDocumentsDirectory()).path}/documento_${agora.millisecondsSinceEpoch}.pdf');
         await arq.copy(dl.path);
-        setState(() { _pdf = dl; _msg = 'Sem conexão: PDF (${paginas!.length} página(s)) na fila. Será enviado quando houver internet. Você pode abrir/salvar abaixo.'; });
-      } else {
-        setState(() => _msg = 'PDF (${paginas!.length} página(s)) enviado ao sistema ✓');
+        setState(() {
+          _pdf = dl;
+          _msg = st == EnvioStatus.rejeitado
+              ? 'Não foi enviado: o servidor recusou (${widget.fila.rejeitados[id]}). Abra o PDF abaixo e salve no celular.'
+              : 'Não foi enviado: sem conexão. O PDF ($n página(s)) ficou na fila e será enviado quando houver internet. Abra abaixo para salvar no celular.';
+        });
       }
     } catch (e) {
       setState(() => _msg = 'Erro: $e');

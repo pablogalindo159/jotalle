@@ -15,7 +15,7 @@ class Settings {
   String get apiKey => _p.getString('apiKey') ?? '';
   set apiKey(String v) => _p.setString('apiKey', v.trim());
 
-  String get googleKey => _p.getString('googleKey') ?? '';
+  String get googleKey => _p.getString('googleKey') ?? kGoogleKeyBuild;
   set googleKey(String v) => _p.setString('googleKey', v.trim());
 
   MapaProvedor get mapa => _p.getString('mapa') == 'google' ? MapaProvedor.google : MapaProvedor.osm;

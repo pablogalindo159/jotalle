@@ -46,7 +46,7 @@ jobs:
           GRADLE
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=GOOGLE_MAPS_KEY=${{ secrets.GOOGLE_MAPS_KEY }}
 
       - uses: actions/upload-artifact@v4
         with:

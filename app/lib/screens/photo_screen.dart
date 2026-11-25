@@ -58,6 +58,27 @@ class _PhotoScreenState extends State<PhotoScreen> {
     if (f != null) setState(() => _extra = f);
   }
 
+  /// Mostra o resultado do envio. Retorna true se o usuário pediu para salvar no celular.
+  Future<bool?> _mostrarResultado({required bool ok, required String titulo, required String texto, bool salvarNoCelular = false}) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        icon: Icon(ok ? Icons.check_circle : Icons.cloud_off, size: 48, color: ok ? Colors.green : Colors.orange),
+        title: Text(titulo, textAlign: TextAlign.center),
+        content: Text(texto, textAlign: TextAlign.center),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          if (salvarNoCelular) TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Agora não')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, salvarNoCelular ? true : null),
+            child: Text(salvarNoCelular ? 'Salvar no celular' : 'OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _gerar() async {
     if (_principal == null || _quando == null) return;
     setState(() { _gerando = true; _aviso = null; });
@@ -102,19 +123,35 @@ class _PhotoScreenState extends State<PhotoScreen> {
         'longitude': local?.lng,
       }, arq.path));
       await widget.fila.enviarTudo();
-
-      // Só guarda no aparelho (galeria) se o envio ficou pendente, ex.: sem internet.
-      final pendente = widget.fila.pendentes().any((i) => i.meta['device_uuid'] == id);
-      if (pendente) {
-        try { await Gal.putImage(arq.path, album: 'Jotalle'); } catch (_) {}
-      }
+      final st = widget.fila.status(id);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text((pendente
-                  ? 'Sem conexão: foto salva no aparelho e na fila. Será enviada quando houver internet.'
-                  : 'Foto enviada ao sistema ✓') +
-              (_aviso != null ? '\n$_aviso' : ''))));
+      if (st == EnvioStatus.enviado) {
+        await _mostrarResultado(
+          ok: true,
+          titulo: 'Enviado com sucesso!',
+          texto: 'A foto foi salva no servidor.${_aviso != null ? '\n\n$_aviso' : ''}',
+        );
+      } else {
+        // Não foi para o servidor: mostra o motivo e oferece salvar no celular.
+        final salvar = await _mostrarResultado(
+          ok: false,
+          titulo: 'Não foi enviado',
+          texto: st == EnvioStatus.rejeitado
+              ? 'O servidor recusou a foto: ${widget.fila.rejeitados[id]}.'
+              : 'Sem conexão com o servidor. A foto ficou na fila e será enviada quando houver internet.',
+          salvarNoCelular: true,
+        );
+        if (salvar == true) {
+          try {
+            await Gal.putImage(arq.path, album: 'Jotalle');
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto salva no celular.')));
+          } catch (e) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível salvar: $e')));
+          }
+        }
+      }
+      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       setState(() => _aviso = 'Erro: $e');
