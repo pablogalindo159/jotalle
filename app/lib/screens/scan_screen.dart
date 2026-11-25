@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -29,14 +30,39 @@ class _ScanScreenState extends State<ScanScreen> {
   String? _msg;
   File? _pdf;
 
+  Future<List<String>> _fotosManuais() async {
+    final fotos = <String>[];
+    final picker = ImagePicker();
+    while (mounted) {
+      final x = await picker.pickImage(source: ImageSource.camera, maxWidth: 2200, imageQuality: 90);
+      if (x == null) break;
+      fotos.add(x.path);
+      if (!mounted) break;
+      final outra = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (c) => AlertDialog(
+          title: Text('${fotos.length} página(s)'),
+          content: const Text('Adicionar outra página?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('CONCLUIR')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('OUTRA PÁGINA')),
+          ],
+        ),
+      );
+      if (outra != true) break;
+    }
+    return fotos;
+  }
+
   Future<void> _digitalizar() async {
     setState(() { _msg = null; _pdf = null; });
     List<String>? paginas;
     try {
       paginas = await CunningDocumentScanner.getPictures(noOfPages: 30, isGalleryImportAllowed: true);
-    } catch (e) {
-      setState(() => _msg = 'Não foi possível abrir o scanner: $e');
-      return;
+    } catch (_) {
+      // scanner do Google indisponível neste aparelho: usa a câmera comum, página por página
+      paginas = await _fotosManuais();
     }
     if (paginas == null || paginas.isEmpty) return;
 
