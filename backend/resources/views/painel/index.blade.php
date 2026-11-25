@@ -19,6 +19,8 @@
   input, select { padding:8px 10px; border:1px solid var(--bd); border-radius:8px; font-size:14px }
   button, .btn { background:var(--pri); color:#fff; border:0; padding:9px 16px; border-radius:8px; font-size:14px; cursor:pointer; text-decoration:none; align-self:flex-end }
   .btn.sec { background:#e8f1fb; color:#2f74b8 }
+  .btn.exc { background:#fdecea; color:#c62828; flex:1; align-self:auto }
+  .aviso-ok { background:#e6f4ea; color:#1e6b34; padding:10px 14px; border-radius:8px; margin:0 0 14px }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px }
   .card { background:var(--card); border:1px solid var(--bd); border-radius:10px; overflow:hidden; display:flex; flex-direction:column }
   .thumb { height:180px; background:#e5e7eb; display:flex; align-items:center; justify-content:center; overflow:hidden }
@@ -44,6 +46,7 @@
 </header>
 <main>
   <h2 class="tit">Fotos e documentos</h2>
+  @if (session('ok'))<div class="aviso-ok">{{ session('ok') }}</div>@endif
   <form method="get">
     <label>Motorista<input name="motorista" value="{{ request('motorista') }}"></label>
     <label>Placa (cavalo ou carreta)<input name="placa" value="{{ request('placa') }}" placeholder="ABC1D23"></label>
@@ -90,6 +93,11 @@
         <div class="acoes">
           <a class="btn sec" href="{{ route('registro.arquivo', $r) }}" target="_blank">Abrir</a>
           <a class="btn" href="{{ route('registro.baixar', $r) }}">Baixar</a>
+          <form method="post" action="{{ route('registro.excluir', $r) }}" style="display:contents"
+                onsubmit="return confirm('Excluir {{ $r->tipo === 'foto' ? 'esta foto' : 'este documento' }} definitivamente? Não dá para desfazer.')">
+            @csrf @method('DELETE')
+            <button class="btn exc" title="Excluir">Excluir</button>
+          </form>
         </div>
       </div>
     @empty

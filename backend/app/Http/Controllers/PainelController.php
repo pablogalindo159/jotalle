@@ -56,4 +56,13 @@ class PainelController extends Controller
 
         return Storage::disk('local')->download($registro->arquivo, $registro->nome_download);
     }
+
+    /** Exclui o registro e o arquivo do disco. */
+    public function excluir(Registro $registro)
+    {
+        Storage::disk('local')->delete($registro->arquivo);
+        $registro->delete();
+
+        return back()->with('ok', 'Registro excluído.');
+    }
 }
