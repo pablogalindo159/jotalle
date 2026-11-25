@@ -45,11 +45,11 @@
   <label class="l" for="carreta">Placa da carreta</label>
   <input id="carreta" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="XYZ9K87">
 
-  <label class="chk"><input type="checkbox" id="fMapa" checked> Incluir mapa da localização na foto</label>
+  <label class="chk"><input type="checkbox" id="fMapa"> Incluir mapa da localização na foto</label>
   <div class="slots">
     <div class="slot" id="slotP">📷<br>Foto principal<button class="x hidden" id="xP">✕</button></div>
     <div class="slot" id="slotE">+ Foto extra<br>(opcional)<button class="x hidden" id="xE">✕</button></div>
-    <div class="slot hidden" id="slotL">+ Foto extra 2<br>(opcional)<button class="x hidden" id="xL">✕</button></div>
+    <div class="slot" id="slotL">+ Foto extra 2<br>(opcional)<button class="x hidden" id="xL">✕</button></div>
   </div>
   <input type="file" id="inP" accept="image/*" capture="environment" hidden>
   <input type="file" id="inE" accept="image/*" capture="environment" hidden>

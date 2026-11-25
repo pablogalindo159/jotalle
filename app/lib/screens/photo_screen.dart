@@ -30,7 +30,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
   final _picker = ImagePicker();
 
   File? _principal, _extra, _extraEsq;
-  bool _mapa = true; // PIP do mapa (opcional); desmarcado libera outra foto no lugar
+  bool _mapa = false; // PIP do mapa: sempre começa desmarcado (não memoriza); desmarcado libera outra foto no lugar
   DateTime? _quando;
   Future<LocalFix>? _fix;
   bool _gerando = false;
@@ -235,7 +235,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
               value: _mapa,
-              onChanged: (v) => setState(() => _mapa = v ?? true),
+              onChanged: (v) => setState(() => _mapa = v ?? false),
               title: const Text('Incluir mapa da localização na foto'),
             ),
             const SizedBox(height: 8),

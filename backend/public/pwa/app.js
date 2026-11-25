@@ -360,6 +360,7 @@ $('#fGerar').onclick = async () => {
         : '<b>Não foi enviado.</b><br>Sem conexão com o servidor. A foto ficou na fila e será enviada quando houver internet. Se quiser, envie pelo WhatsApp (ou escolha "Salvar imagem" na lista).', 'erro');
     }
     F.principal = F.extra = F.extraEsq = null;
+    $('#fMapa').checked = false; $('#slotL').classList.remove('hidden'); // volta ao padrão: mapa desmarcado
     atualizaSlot($('#slotP'), $('#xP'), null); atualizaSlot($('#slotE'), $('#xE'), null); atualizaSlot($('#slotL'), $('#xL'), null);
   } catch (e) {
     msg($('#fMsg'), 'Erro: ' + (e && e.message || e), 'erro');
