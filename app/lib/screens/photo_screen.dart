@@ -84,7 +84,6 @@ class _PhotoScreenState extends State<PhotoScreen> {
       final dir = Directory('${(await getApplicationDocumentsDirectory()).path}/fila')..createSync(recursive: true);
       final arq = File('${dir.path}/$id.jpg');
       await arq.writeAsBytes(jpg);
-      try { await Gal.putImage(arq.path, album: 'Jotalle'); } catch (_) {}
 
       await widget.fila.adicionar(UploadItem({
         'device_uuid': id,
@@ -100,11 +99,20 @@ class _PhotoScreenState extends State<PhotoScreen> {
         'latitude': local?.lat,
         'longitude': local?.lng,
       }, arq.path));
-      widget.fila.enviarTudo();
+      await widget.fila.enviarTudo();
+
+      // Só guarda no aparelho (galeria) se o envio ficou pendente, ex.: sem internet.
+      final pendente = widget.fila.pendentes().any((i) => i.meta['device_uuid'] == id);
+      if (pendente) {
+        try { await Gal.putImage(arq.path, album: 'Jotalle'); } catch (_) {}
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Foto salva. Enviando…${_aviso != null ? '\n$_aviso' : ''}')));
+          content: Text((pendente
+                  ? 'Sem conexão: foto salva no aparelho e na fila. Será enviada quando houver internet.'
+                  : 'Foto enviada ao sistema ✓') +
+              (_aviso != null ? '\n$_aviso' : ''))));
       Navigator.pop(context);
     } catch (e) {
       setState(() => _aviso = 'Erro: $e');
@@ -163,7 +171,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
               icon: _gerando
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.check),
-              label: Text(_gerando ? 'Gerando…' : 'Gerar e enviar'),
+              label: Text(_gerando ? 'Gerando e enviando…' : 'Gerar e enviar'),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(54)),
             ),
           ],

@@ -74,12 +74,17 @@ class _ScanScreenState extends State<ScanScreen> {
         'latitude': local?.lat,
         'longitude': local?.lng,
       }, arq.path));
-      widget.fila.enviarTudo();
+      await widget.fila.enviarTudo();
 
-      // cópia para o usuário abrir/baixar (a da fila é apagada após o envio)
-      final dl = File('${(await getApplicationDocumentsDirectory()).path}/documento_${agora.millisecondsSinceEpoch}.pdf');
-      await arq.copy(dl.path);
-      setState(() { _pdf = dl; _msg = 'PDF gerado (${paginas!.length} página(s)). Enviando ao servidor…'; });
+      final pendente = widget.fila.pendentes().any((i) => i.meta['device_uuid'] == id);
+      if (pendente) {
+        // sem internet: guarda uma cópia para abrir/salvar (a da fila é apagada após o envio)
+        final dl = File('${(await getApplicationDocumentsDirectory()).path}/documento_${agora.millisecondsSinceEpoch}.pdf');
+        await arq.copy(dl.path);
+        setState(() { _pdf = dl; _msg = 'Sem conexão: PDF (${paginas!.length} página(s)) na fila. Será enviado quando houver internet. Você pode abrir/salvar abaixo.'; });
+      } else {
+        setState(() => _msg = 'PDF (${paginas!.length} página(s)) enviado ao sistema ✓');
+      }
     } catch (e) {
       setState(() => _msg = 'Erro: $e');
     } finally {
@@ -103,7 +108,7 @@ class _ScanScreenState extends State<ScanScreen> {
               icon: _gerando
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.document_scanner),
-              label: Text(_gerando ? 'Gerando PDF…' : 'Tirar foto do documento'),
+              label: Text(_gerando ? 'Gerando e enviando…' : 'Tirar foto do documento'),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(54), backgroundColor: const Color(0xFF2E7D32)),
             ),
             if (_msg != null) Padding(padding: const EdgeInsets.only(top: 16), child: Text(_msg!)),
